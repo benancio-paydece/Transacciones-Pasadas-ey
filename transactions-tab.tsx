@@ -719,7 +719,7 @@ export default function TransactionsTab() {
                 </Button>
                 <Button
                   onClick={downloadSummary}
-                  className="paydece-button flex items-center gap-2 text-xs px-3 py-1 h-7"
+                  className="bg-black text-white font-medium rounded-full transition-all hover:opacity-90 flex items-center gap-2 text-xs px-3 py-1 h-7"
                 >
                   <Download className="h-3 w-3" />
                   Descargar resumen
@@ -740,7 +740,7 @@ export default function TransactionsTab() {
                     placeholder="Escribe las primeras 3 letras"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-7 rounded-full text-xs h-7"
+                    className="pl-7 rounded-full text-xs h-7 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
               </div>
@@ -749,7 +749,7 @@ export default function TransactionsTab() {
                   Estado
                 </Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="rounded-full text-xs h-7">
+                  <SelectTrigger className="rounded-full text-xs h-7 focus:ring-gray-500 focus:border-gray-500">
                     <SelectValue placeholder="Todos los estados" />
                   </SelectTrigger>
                   <SelectContent>
@@ -770,7 +770,7 @@ export default function TransactionsTab() {
                   Operación
                 </Label>
                 <Select value={operationFilter} onValueChange={handleOperationFilterChange}>
-                  <SelectTrigger className="rounded-full text-xs h-7">
+                  <SelectTrigger className="rounded-full text-xs h-7 focus:ring-gray-500 focus:border-gray-500">
                     <SelectValue placeholder="Todas las operaciones" />
                   </SelectTrigger>
                   <SelectContent>
@@ -790,7 +790,7 @@ export default function TransactionsTab() {
                       id="date"
                       variant={"outline"}
                       className={cn(
-                        "w-full justify-start text-left font-normal rounded-full text-xs h-7",
+                        "w-full justify-start text-left font-normal rounded-full text-xs h-7 focus:ring-gray-500 focus:border-gray-500",
                         !dateRange.from && !dateRange.to && "text-muted-foreground",
                       )}
                     >

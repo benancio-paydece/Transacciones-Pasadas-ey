@@ -79,11 +79,11 @@
 }
 
 .paydece-button {
-  @apply bg-paydece-cyan text-paydece-blue font-medium rounded-full transition-all hover:opacity-90;
+  @apply bg-black text-white font-medium rounded-full transition-all hover:opacity-90;
 }
 
 .paydece-button-secondary {
-  @apply bg-paydece-blue text-white font-medium rounded-full transition-all hover:opacity-90;
+  @apply bg-black text-white font-medium rounded-full transition-all hover:opacity-90;
 }
 
 .paydece-card {
@@ -116,4 +116,22 @@
 
 .paydece-badge-gray {
   @apply bg-gray-100 text-gray-800 hover:bg-gray-100;
+}
+
+/* Personalizar el focus ring de los inputs y selects */
+.focus\:ring-gray-500:focus {
+  --tw-ring-color: #999999;
+}
+
+/* Personalizar el outline de los elementos de formulario */
+input:focus,
+select:focus,
+button:focus {
+  outline: 2px solid #999999 !important;
+  outline-offset: 2px;
+}
+
+/* Personalizar el ring de Tailwind para elementos específicos */
+.ring-gray-500 {
+  --tw-ring-color: #999999;
 }
