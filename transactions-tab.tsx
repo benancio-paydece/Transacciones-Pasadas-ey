@@ -247,13 +247,28 @@ export default function TransactionsTab() {
   // Ref para el contenedor de scroll
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  // Definir allTransactions PRIMERO
-  // TODO: Conectar API para cargar transacciones
-  // Reemplazar este array estático con llamada a endpoint
-  // const allTransactions: Transaction[] = [...]
-
-  // Placeholder temporal - reemplazar con datos de API
-  const allTransactions: Transaction[] = []
+  // Transacción de ejemplo para mostrar en móvil
+  const allTransactions: Transaction[] = [
+    {
+      id: "TXN-001",
+      date: "15/12/2024",
+      time: "14:30",
+      timestamp: new Date("2024-12-15T14:30:00Z").getTime(),
+      cryptoAmount: 1250.0,
+      cryptoCurrency: "USDC",
+      fiatAmount: 1312500.0,
+      fiatCurrency: "ARS",
+      status: "finalizado",
+      operation: "compra",
+      counterparty: {
+        wallet: "0x1234567890abcdef1234567890abcdef12345678",
+        telegram: "@maria_crypto",
+      },
+      reference: "REF-2024-001",
+      fee: 37.5,
+      net: 1212.5,
+    },
+  ]
 
   // Calcular volumen mensual de USDC en los últimos 30 días
   // TODO: Conectar API para obtener volumen mensual
@@ -262,7 +277,7 @@ export default function TransactionsTab() {
   // }, [])
 
   // Placeholder temporal - reemplazar con datos de API
-  const monthlyVolume = "0"
+  const monthlyVolume = "1,250"
 
   // NUEVA LÓGICA: Transacciones completadas (últimos 30 días)
   // TODO: Conectar API para obtener estadísticas de transacciones
@@ -275,7 +290,7 @@ export default function TransactionsTab() {
   // }, [])
 
   // Placeholders temporales - reemplazar con datos de API
-  const completedTransactionsCount = 0
+  const completedTransactionsCount = 1
   const ordersInProcessCount = 0
 
   // Función para limpiar filtros
@@ -465,18 +480,7 @@ export default function TransactionsTab() {
       setLoading(false)
       setInitialLoad(false)
     }, delay)
-  }, [
-    currentPage,
-    loading,
-    hasMore,
-    searchTerm,
-    statusFilter,
-    operationFilter,
-    dateRange,
-    sortConfig,
-    initialLoad,
-    getFilteredTransactions,
-  ])
+  }, [currentPage, loading, hasMore, searchTerm, statusFilter, operationFilter, dateRange, sortConfig, initialLoad])
 
   // Efecto para cargar transacciones iniciales y cuando cambien los filtros
   useEffect(() => {
@@ -803,19 +807,20 @@ export default function TransactionsTab() {
               </div>
 
               {/* Mobile Card Layout */}
-              <div className="md:hidden space-y-2 p-3">
+              <div className="md:hidden space-y-3 p-3">
                 {displayedTransactions.map((transaction) => {
                   const localDateTime = formatLocalDateTime(transaction.timestamp)
                   return (
                     <div
                       key={transaction.id}
-                      className="bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
                       onClick={() => handleRowClick(transaction)}
                     >
-                      <div className="flex justify-between items-start mb-2">
+                      {/* Header con ID y badges */}
+                      <div className="flex justify-between items-start mb-3">
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium">{transaction.id}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-sm font-semibold text-gray-900">{transaction.id}</span>
+                          <span className="text-xs text-gray-500">
                             {localDateTime.date} {localDateTime.time}
                           </span>
                         </div>
@@ -825,26 +830,41 @@ export default function TransactionsTab() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-muted-foreground">Cripto:</span>
-                          <div className="font-medium">
-                            {formatCrypto(transaction.cryptoAmount)} {transaction.cryptoCurrency}
-                          </div>
+                      {/* Información principal */}
+                      <div className="space-y-3">
+                        {/* Fecha */}
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-medium text-gray-600">Fecha:</span>
+                          <span className="text-xs text-gray-900">
+                            {localDateTime.date} {localDateTime.time} {localDateTime.utc}
+                          </span>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">FIAT:</span>
-                          <div className="font-medium">
-                            {formatFiat(transaction.fiatAmount)} {transaction.fiatCurrency}
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="mt-2 pt-2 border-t border-gray-100">
-                        <div className="text-xs text-muted-foreground">Contraparte:</div>
-                        <div className="text-xs">
-                          <div className="font-medium">{truncateWallet(transaction.counterparty.wallet)}</div>
-                          <div className="text-muted-foreground">{transaction.counterparty.telegram}</div>
+                        {/* Contraparte */}
+                        <div className="flex justify-between items-start">
+                          <span className="text-xs font-medium text-gray-600">Contraparte:</span>
+                          <div className="text-right">
+                            <div className="text-xs font-medium text-gray-900">
+                              {truncateWallet(transaction.counterparty.wallet)}
+                            </div>
+                            <div className="text-xs text-gray-500">{transaction.counterparty.telegram}</div>
+                          </div>
+                        </div>
+
+                        {/* Cripto */}
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-medium text-gray-600">Cripto:</span>
+                          <span className="text-xs font-medium text-gray-900">
+                            {formatCrypto(transaction.cryptoAmount)} {transaction.cryptoCurrency}
+                          </span>
+                        </div>
+
+                        {/* FIAT */}
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-medium text-gray-600">FIAT:</span>
+                          <span className="text-xs font-medium text-gray-900">
+                            {formatFiat(transaction.fiatAmount)} {transaction.fiatCurrency}
+                          </span>
                         </div>
                       </div>
                     </div>
