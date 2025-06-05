@@ -17,28 +17,26 @@ import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 
-const formatCrypto = (amount: number, currency: string) => {
-  return (
-    new Intl.NumberFormat("es-ES", {
-      style: "decimal",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount) +
-    " " +
-    currency
-  )
+const formatCrypto = (amount: number) => {
+  return new Intl.NumberFormat("es-ES", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
 }
 
-const formatFiat = (amount: number, currency: string) => {
-  return (
-    new Intl.NumberFormat("es-ES", {
-      style: "decimal",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount) +
-    " " +
-    currency
-  )
+const formatFiat = (amount: number) => {
+  const formatted = new Intl.NumberFormat("es-ES", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
+
+  // Truncar si es muy largo (más de 12 caracteres)
+  if (formatted.length > 12) {
+    return formatted.substring(0, 9) + "..."
+  }
+  return formatted
 }
 
 // Función para truncar wallet
@@ -225,7 +223,7 @@ export default function TransactionsTab() {
   const [currentPage, setCurrentPage] = useState(0)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-  const ITEMS_PER_PAGE = 30
+  const ITEMS_PER_PAGE = 10 // Cambiado de 15 a 10
 
   // Definir allTransactions PRIMERO
   const allTransactions = [
@@ -324,52 +322,14 @@ export default function TransactionsTab() {
       fee: 96.0,
       net: 3104.0,
     },
-    {
-      id: "TXN-006",
-      date: "13/12/2024",
-      time: "08:30",
-      timestamp: new Date("2024-12-13T08:30:00Z").getTime(),
-      cryptoAmount: 750.0,
-      cryptoCurrency: "USDC",
-      fiatAmount: 750.0,
-      fiatCurrency: "USD",
-      status: "finalizado",
-      operation: "venta",
-      counterparty: {
-        wallet: "0x4444444444444444444444444444444444444444",
-        telegram: "@diego_hodl",
-      },
-      reference: "REF-2024-006",
-      fee: 22.5,
-      net: 727.5,
-    },
-    {
-      id: "TXN-007",
-      date: "16/12/2024",
-      time: "10:15",
-      timestamp: new Date("2024-12-16T10:15:00Z").getTime(),
-      cryptoAmount: 1800.0,
-      cryptoCurrency: "USDC",
-      fiatAmount: 1620.0,
-      fiatCurrency: "EUR",
-      status: "finalizado",
-      operation: "compra",
-      counterparty: {
-        wallet: "0x8888888888888888888888888888888888888888",
-        telegram: "@pedro_crypto",
-      },
-      reference: "REF-2024-007",
-      fee: 54.0,
-      net: 1746.0,
-    },
     // Agregamos más transacciones para simular scroll infinito con fechas recientes
-    ...Array.from({ length: 100 }, (_, i) => {
+    ...Array.from({ length: 50 }, (_, i) => {
       const randomDaysAgo = Math.floor(Math.random() * 25) + 1 // Entre 1 y 25 días atrás
       const date = new Date()
       date.setDate(date.getDate() - randomDaysAgo)
 
       return {
-        id: `TXN-${String(i + 8).padStart(3, "0")}`,
+        id: `TXN-${String(i + 6).padStart(3, "0")}`,
         date: `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`,
         time: `${String(Math.floor(Math.random() * 24)).padStart(2, "0")}:${String(Math.floor(Math.random() * 60)).padStart(2, "0")}`,
         timestamp: date.getTime(),
@@ -383,9 +343,9 @@ export default function TransactionsTab() {
         operation: ["compra", "venta"][Math.floor(Math.random() * 2)],
         counterparty: {
           wallet: `0x${Math.random().toString(16).substr(2, 20)}${Math.random().toString(16).substr(2, 20)}`,
-          telegram: `@user_${i + 8}`,
+          telegram: `@user_${i + 6}`,
         },
-        reference: `REF-2024-${String(i + 8).padStart(3, "0")}`,
+        reference: `REF-2024-${String(i + 6).padStart(3, "0")}`,
         fee: Math.floor(Math.random() * 100) + 10,
         net: Math.floor(Math.random() * 4900) + 90,
       }
@@ -619,7 +579,7 @@ export default function TransactionsTab() {
       }
 
       setLoading(false)
-    }, 300) // Reducir delay para mejor UX
+    }, 500) // Aumentar el delay a 500ms para que sea más visible el mensaje de carga
   }, [currentPage, loading, hasMore, searchTerm, statusFilter, operationFilter, dateRange, sortConfig])
 
   // Efecto para cargar transacciones iniciales y cuando cambien los filtros
@@ -643,7 +603,7 @@ export default function TransactionsTab() {
       const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
       const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
       const clientHeight = document.documentElement.clientHeight || window.innerHeight
-      const scrolledToBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 100 // 100px antes del final
+      const scrolledToBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 50 // 50px antes del final
 
       if (scrolledToBottom && !loading && hasMore) {
         loadMoreTransactions()
@@ -677,70 +637,70 @@ export default function TransactionsTab() {
   const filteredTransactions = getFilteredTransactions()
 
   return (
-    <div className="min-h-screen bg-paydece-gradient">
-      <div className="max-w-7xl mx-auto p-4 space-y-3">
-        {/* Stats Cards - Más compactos */}
-        <div className="grid gap-2 md:grid-cols-2">
-          <Card className="paydece-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-sm font-medium">Volumen Mensual (últimos 30 días)</CardTitle>
+    <div className="h-full bg-paydece-gradient overflow-hidden">
+      <div className="h-full overflow-y-auto">
+        {/* Stats Cards - Sin espacios, con bordes redondeados */}
+        <div className="grid md:grid-cols-2 border-b border-gray-300">
+          <Card className="paydece-card rounded-tl-lg rounded-tr-none rounded-bl-none rounded-br-none border-r border-gray-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-2">
+              <CardTitle className="text-xs font-medium">Volumen Mensual (últimos 30 días)</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 pb-3">
-              <div className="text-lg font-bold text-paydece-blue">{monthlyVolume} USDC</div>
+            <CardContent className="pt-0 pb-2 px-3">
+              <div className="text-sm font-bold text-paydece-blue">{monthlyVolume} USDC</div>
             </CardContent>
           </Card>
-          <Card className="paydece-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-sm font-medium">Transacciones completadas (últimos 30 días)</CardTitle>
+          <Card className="paydece-card rounded-tl-none rounded-tr-lg rounded-bl-none rounded-br-none">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-2">
+              <CardTitle className="text-xs font-medium">Transacciones completadas (últimos 30 días)</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 pb-3">
-              <div className="text-lg font-bold text-paydece-blue">{completedTransactionsCount}</div>
+            <CardContent className="pt-0 pb-2 px-3">
+              <div className="text-sm font-bold text-paydece-blue">{completedTransactionsCount}</div>
               <p className="text-xs text-muted-foreground">{ordersInProcessCount} órdenes en proceso</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters - Más compactos */}
-        <Card className="paydece-card">
-          <CardHeader className="pb-2">
+        {/* Filters - Sin espacios, con borde redondeado */}
+        <Card className="paydece-card rounded-none border-b border-gray-300">
+          <CardHeader className="pb-1 px-3 pt-2">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <Filter className="h-4 w-4" />
+              <CardTitle className="flex items-center gap-2 text-xs">
+                <Filter className="h-3 w-3" />
                 Filtros
               </CardTitle>
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <Button
                   onClick={clearFilters}
                   variant="outline"
-                  className="flex items-center gap-2 rounded-full text-xs px-3 py-1 h-7"
+                  className="flex items-center gap-1 rounded-full text-xs px-2 py-1 h-6"
                 >
-                  <RotateCcw className="h-3 w-3" />
+                  <RotateCcw className="h-2 w-2" />
                   Limpiar filtros
                 </Button>
                 <Button
                   onClick={downloadSummary}
-                  className="bg-black text-white font-medium rounded-full transition-all hover:opacity-90 flex items-center gap-2 text-xs px-3 py-1 h-7"
+                  className="bg-black text-white font-medium rounded-full transition-all hover:opacity-90 flex items-center gap-1 text-xs px-2 py-1 h-6"
                 >
-                  <Download className="h-3 w-3" />
+                  <Download className="h-2 w-2" />
                   Descargar resumen
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-0 pb-3">
-            <div className="grid gap-2 md:grid-cols-4">
+          <CardContent className="pt-0 pb-2 px-3">
+            <div className="grid gap-1 md:grid-cols-4">
               <div className="space-y-1">
                 <Label htmlFor="search" className="text-xs">
                   Buscar
                 </Label>
                 <div className="relative">
-                  <Search className="absolute left-2 top-2 h-3 w-3 text-muted-foreground" />
+                  <Search className="absolute left-2 top-1.5 h-2 w-2 text-muted-foreground" />
                   <Input
                     id="search"
-                    placeholder="Escribe las primeras 3 letras"
+                    placeholder="Escribe 3 letras"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-7 rounded-full text-xs h-7 focus:ring-gray-500 focus:border-gray-500"
+                    className="pl-6 rounded-full text-xs h-6 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
               </div>
@@ -749,8 +709,8 @@ export default function TransactionsTab() {
                   Estado
                 </Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="rounded-full text-xs h-7 focus:ring-gray-500 focus:border-gray-500">
-                    <SelectValue placeholder="Todos los estados" />
+                  <SelectTrigger className="rounded-full text-xs h-6 focus:ring-gray-500 focus:border-gray-500">
+                    <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos los estados</SelectItem>
@@ -770,11 +730,11 @@ export default function TransactionsTab() {
                   Operación
                 </Label>
                 <Select value={operationFilter} onValueChange={handleOperationFilterChange}>
-                  <SelectTrigger className="rounded-full text-xs h-7 focus:ring-gray-500 focus:border-gray-500">
-                    <SelectValue placeholder="Todas las operaciones" />
+                  <SelectTrigger className="rounded-full text-xs h-6 focus:ring-gray-500 focus:border-gray-500">
+                    <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas las operaciones</SelectItem>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="compra">Compra</SelectItem>
                     <SelectItem value="venta">Venta</SelectItem>
                   </SelectContent>
@@ -790,11 +750,11 @@ export default function TransactionsTab() {
                       id="date"
                       variant={"outline"}
                       className={cn(
-                        "w-full justify-start text-left font-normal rounded-full text-xs h-7 focus:ring-gray-500 focus:border-gray-500",
+                        "w-full justify-start text-left font-normal rounded-full text-xs h-6 focus:ring-gray-500 focus:border-gray-500",
                         !dateRange.from && !dateRange.to && "text-muted-foreground",
                       )}
                     >
-                      <CalendarIcon className="mr-1 h-3 w-3" />
+                      <CalendarIcon className="mr-1 h-2 w-2" />
                       {dateRange.from ? (
                         dateRange.to ? (
                           <>
@@ -805,7 +765,7 @@ export default function TransactionsTab() {
                           format(dateRange.from, "dd/MM/yyyy", { locale: es })
                         )
                       ) : (
-                        "Seleccionar rango"
+                        "Rango"
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -826,51 +786,51 @@ export default function TransactionsTab() {
           </CardContent>
         </Card>
 
-        {/* Transactions Table - Más compacto */}
-        <Card className="paydece-card">
-          <CardContent className="p-0">
-            <div className="rounded-xl overflow-hidden">
+        {/* Transactions Table - Sin espacios, más compacto, con bordes redondeados en la parte inferior */}
+        <Card className="paydece-card rounded-bl-lg rounded-br-lg rounded-tl-none rounded-tr-none flex-1">
+          <CardContent className="p-0 h-full">
+            <div className="overflow-hidden h-full">
               <Table>
                 <TableHeader className="bg-gray-50">
                   <TableRow>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1"
+                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[12%] text-center"
                       onClick={() => requestSort("timestamp")}
                     >
                       Fecha{getSortDirection("timestamp")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1"
+                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[18%] text-center"
                       onClick={() => requestSort("counterparty")}
                     >
                       Contraparte{getSortDirection("counterparty")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1"
+                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[12%] text-center"
                       onClick={() => requestSort("crypto")}
                     >
                       Cripto{getSortDirection("crypto")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1"
+                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[12%] text-center"
                       onClick={() => requestSort("fiat")}
                     >
                       FIAT{getSortDirection("fiat")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1"
+                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[10%] text-center"
                       onClick={() => requestSort("operation")}
                     >
                       Operación{getSortDirection("operation")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1"
+                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[14%] text-center"
                       onClick={() => requestSort("id")}
                     >
-                      # de Transacción{getSortDirection("id")}
+                      # Transacción{getSortDirection("id")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1"
+                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[12%] text-center"
                       onClick={() => requestSort("status")}
                     >
                       Estado{getSortDirection("status")}
@@ -886,49 +846,61 @@ export default function TransactionsTab() {
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => handleRowClick(transaction)}
                       >
-                        <TableCell className="py-1">
-                          <div className="flex flex-col">
+                        <TableCell className="py-1 px-2 w-[12%]">
+                          <div className="flex flex-col text-center">
                             <span className="text-xs">{localDateTime.date}</span>
                             <span className="text-xs text-muted-foreground">
                               {localDateTime.time} {localDateTime.utc}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="py-1">
-                          <div className="flex flex-col">
+                        <TableCell className="py-1 px-2 w-[18%]">
+                          <div className="flex flex-col text-center">
                             <span className="font-medium text-xs">
                               {truncateWallet(transaction.counterparty.wallet)}
                             </span>
                             <span className="text-xs text-muted-foreground">{transaction.counterparty.telegram}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-xs py-1">
-                          {formatCrypto(transaction.cryptoAmount, transaction.cryptoCurrency)}
+                        <TableCell className="font-medium text-xs py-1 px-2 w-[12%] text-center">
+                          <div className="flex flex-col">
+                            <span className="text-xs">{formatCrypto(transaction.cryptoAmount)}</span>
+                            <span className="text-xs text-muted-foreground">{transaction.cryptoCurrency}</span>
+                          </div>
                         </TableCell>
-                        <TableCell className="font-medium text-xs py-1">
-                          {formatFiat(transaction.fiatAmount, transaction.fiatCurrency)}
+                        <TableCell className="font-medium text-xs py-1 px-2 w-[12%] text-center">
+                          <div className="flex flex-col">
+                            <span className="text-xs">{formatFiat(transaction.fiatAmount)}</span>
+                            <span className="text-xs text-muted-foreground">{transaction.fiatCurrency}</span>
+                          </div>
                         </TableCell>
-                        <TableCell className="py-1">{getOperationBadge(transaction.operation)}</TableCell>
-                        <TableCell className="font-medium text-xs py-1">{transaction.id}</TableCell>
-                        <TableCell className="py-1">{getStatusBadge(transaction.status)}</TableCell>
+                        <TableCell className="py-1 px-2 w-[10%] text-center">
+                          {getOperationBadge(transaction.operation)}
+                        </TableCell>
+                        <TableCell className="font-medium text-xs py-1 px-2 w-[14%] text-center">
+                          {transaction.id}
+                        </TableCell>
+                        <TableCell className="py-1 px-2 w-[12%] text-center">
+                          {getStatusBadge(transaction.status)}
+                        </TableCell>
                       </TableRow>
                     )
                   })}
                 </TableBody>
               </Table>
-              {loading && (
-                <div className="flex justify-center py-3">
-                  <div className="text-sm text-muted-foreground">Cargando más transacciones...</div>
+              {loading && displayedTransactions.length > 0 && (
+                <div className="flex justify-center py-2 border-t border-gray-200">
+                  <div className="text-xs text-muted-foreground">Cargando órdenes...</div>
                 </div>
               )}
               {!hasMore && displayedTransactions.length > 0 && (
-                <div className="flex justify-center py-3">
-                  <div className="text-sm text-muted-foreground">No hay más transacciones para mostrar</div>
+                <div className="flex justify-center py-2 border-t border-gray-200">
+                  <div className="text-xs text-muted-foreground">No hay más transacciones para mostrar</div>
                 </div>
               )}
               {displayedTransactions.length === 0 && !loading && (
-                <div className="flex justify-center py-6">
-                  <div className="text-sm text-muted-foreground">No se encontraron transacciones</div>
+                <div className="flex justify-center py-4">
+                  <div className="text-xs text-muted-foreground">No se encontraron transacciones</div>
                 </div>
               )}
             </div>

@@ -69,7 +69,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-paydece-gradient min-h-screen text-foreground font-sans;
+    @apply min-h-screen text-foreground font-sans;
   }
 }
 
@@ -87,7 +87,7 @@
 }
 
 .paydece-card {
-  @apply bg-white rounded-xl shadow-lg;
+  @apply bg-white shadow-none border border-gray-300;
 }
 
 .paydece-badge-green {

@@ -1,10 +1,11 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type React from "react"
+import type { Metadata } from "next"
+import "./globals.css"
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: "Paydece - Transacciones",
+  description: "Plataforma de transacciones Paydece",
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -13,8 +14,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="es">
+      <body className="bg-paydece-lightblue min-h-screen flex items-center justify-center p-4">
+        <div className="w-[900px] h-[600px] bg-white rounded-xl shadow-2xl overflow-hidden">{children}</div>
+      </body>
     </html>
   )
 }
