@@ -17,7 +17,28 @@ import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 
-const formatCrypto = (amount: number) => {
+// Tipos para las transacciones
+interface Transaction {
+  id: string
+  date: string
+  time: string
+  timestamp: number
+  cryptoAmount: number
+  cryptoCurrency: string
+  fiatAmount: number
+  fiatCurrency: string
+  status: string
+  operation: string
+  counterparty: {
+    wallet: string
+    telegram: string
+  }
+  reference: string
+  fee: number
+  net: number
+}
+
+const formatCrypto = (amount: number): string => {
   return new Intl.NumberFormat("es-ES", {
     style: "decimal",
     minimumFractionDigits: 2,
@@ -25,7 +46,7 @@ const formatCrypto = (amount: number) => {
   }).format(amount)
 }
 
-const formatFiat = (amount: number) => {
+const formatFiat = (amount: number): string => {
   const formatted = new Intl.NumberFormat("es-ES", {
     style: "decimal",
     minimumFractionDigits: 2,
@@ -40,13 +61,10 @@ const formatFiat = (amount: number) => {
 }
 
 // Función para truncar wallet
-const truncateWallet = (wallet: string) => {
+const truncateWallet = (wallet: string): string => {
   if (wallet.length <= 10) return wallet
   return `${wallet.slice(0, 6)}...${wallet.slice(-4)}`
 }
-
-// Orden de prioridad para estados
-const statusOrder = ["apelado", "en custodia", "iniciada", "finalizado", "cancelado", "reembolsado", "liberado"]
 
 // Mover la función formatLocalDateTime aquí
 const formatLocalDateTime = (timestamp: number) => {
@@ -81,7 +99,7 @@ const formatLocalDateTime = (timestamp: number) => {
 }
 
 // Función para formatear estados correctamente
-const formatStatus = (status: string) => {
+const formatStatus = (status: string): string => {
   switch (status) {
     case "iniciada":
       return "Iniciada"
@@ -108,7 +126,7 @@ const formatStatus = (status: string) => {
 }
 
 // Función para descargar CSV que coincida exactamente con las columnas de la tabla
-const downloadCSV = (data: any[], filename: string) => {
+const downloadCSV = (data: Transaction[], filename: string): void => {
   // Preparar los datos para CSV con las mismas columnas que se muestran en la tabla
   const csvData = data.map((transaction) => {
     const localDateTime = formatLocalDateTime(transaction.timestamp)
@@ -153,7 +171,7 @@ const downloadCSV = (data: any[], filename: string) => {
 }
 
 // Restaurar la función handleRowClick para abrir en nueva pestaña como funcionaba antes
-const handleRowClick = (transaction: any) => {
+const handleRowClick = (transaction: Transaction): void => {
   // Abrir detalles en nueva pestaña
   const detailsUrl = `/transaction/${transaction.id}`
   window.open(detailsUrl, "_blank")
@@ -219,14 +237,14 @@ export default function TransactionsTab() {
   })
 
   // Estados para scroll infinito
-  const [displayedTransactions, setDisplayedTransactions] = useState<any[]>([])
+  const [displayedTransactions, setDisplayedTransactions] = useState<Transaction[]>([])
   const [currentPage, setCurrentPage] = useState(0)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-  const ITEMS_PER_PAGE = 10 // Cambiado de 15 a 10
+  const ITEMS_PER_PAGE = 10
 
   // Definir allTransactions PRIMERO
-  const allTransactions = [
+  const allTransactions: Transaction[] = [
     {
       id: "TXN-001",
       date: "15/12/2024",
@@ -323,8 +341,8 @@ export default function TransactionsTab() {
       net: 3104.0,
     },
     // Agregamos más transacciones para simular scroll infinito con fechas recientes
-    ...Array.from({ length: 50 }, (_, i) => {
-      const randomDaysAgo = Math.floor(Math.random() * 25) + 1 // Entre 1 y 25 días atrás
+    ...Array.from({ length: 50 }, (_, i): Transaction => {
+      const randomDaysAgo = Math.floor(Math.random() * 25) + 1
       const date = new Date()
       date.setDate(date.getDate() - randomDaysAgo)
 
@@ -377,7 +395,6 @@ export default function TransactionsTab() {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
     return allTransactions.reduce((count, transaction) => {
-      // Solo contar si el estado es "finalizado" Y está dentro de los últimos 30 días
       if (transaction.status === "finalizado") {
         const txDate = new Date(transaction.timestamp)
         if (txDate >= thirtyDaysAgo) {
@@ -386,23 +403,22 @@ export default function TransactionsTab() {
       }
       return count
     }, 0)
-  }, [])
+  }, [allTransactions])
 
   // NUEVA LÓGICA: Órdenes en proceso
   const ordersInProcessCount = useMemo(() => {
     const processStatuses = ["iniciada", "en custodia", "pagado", "apelado"]
 
     return allTransactions.reduce((count, transaction) => {
-      // Contar si el estado está en la lista de estados de proceso
       if (processStatuses.includes(transaction.status)) {
         return count + 1
       }
       return count
     }, 0)
-  }, [])
+  }, [allTransactions])
 
   // Función para limpiar filtros
-  const clearFilters = () => {
+  const clearFilters = (): void => {
     setSearchTerm("")
     setStatusFilter("all")
     setOperationFilter("all")
@@ -414,16 +430,15 @@ export default function TransactionsTab() {
   }
 
   // Función para descargar resumen
-  const downloadSummary = () => {
+  const downloadSummary = (): void => {
     const filteredData = getFilteredTransactions()
     const filename = `resumen_transacciones_paydece_${new Date().toISOString().split("T")[0]}.csv`
     downloadCSV(filteredData, filename)
   }
 
   // Función para manejar cambio en filtro de operación
-  const handleOperationFilterChange = (value: string) => {
+  const handleOperationFilterChange = (value: string): void => {
     setOperationFilter(value)
-    // Si se selecciona compra o venta, ordenar por fecha de más reciente a menos reciente
     if (value === "compra" || value === "venta") {
       setSortConfig({ key: "timestamp", direction: "desc" })
     }
@@ -433,14 +448,12 @@ export default function TransactionsTab() {
   }
 
   // Función para obtener transacciones filtradas
-  const getFilteredTransactions = () => {
+  const getFilteredTransactions = (): Transaction[] => {
     return allTransactions
       .filter((transaction) => {
-        // Nueva lógica de búsqueda más precisa
         const searchLower = searchTerm.toLowerCase().trim()
         let matchesSearch = true
 
-        // Solo buscar si hay al menos 3 caracteres
         if (searchTerm.trim().length >= 3) {
           const localDateTime = formatLocalDateTime(transaction.timestamp)
 
@@ -458,12 +471,10 @@ export default function TransactionsTab() {
             localDateTime.date.startsWith(searchTerm.trim()) ||
             localDateTime.time.startsWith(searchTerm.trim())
         }
-        // Si hay menos de 3 caracteres, matchesSearch permanece true (no filtra)
 
         const matchesStatus = statusFilter === "all" || transaction.status === statusFilter
         const matchesOperation = operationFilter === "all" || transaction.operation === operationFilter
 
-        // Filtrar por rango de fechas
         let matchesDateRange = true
         if (dateRange.from || dateRange.to) {
           const txDate = new Date(transaction.timestamp)
@@ -514,8 +525,7 @@ export default function TransactionsTab() {
         }
 
         if (sortConfig.key === "status") {
-          // Mapear estados a números para ordenamiento correcto
-          const getStatusPriority = (status) => {
+          const getStatusPriority = (status: string): number => {
             switch (status) {
               case "apelado":
                 return 1
@@ -547,7 +557,6 @@ export default function TransactionsTab() {
             return sortConfig.direction === "asc" ? priorityA - priorityB : priorityB - priorityA
           }
 
-          // Si tienen la misma prioridad, ordenar por fecha
           return b.timestamp - a.timestamp
         }
 
@@ -579,7 +588,7 @@ export default function TransactionsTab() {
       }
 
       setLoading(false)
-    }, 500) // Aumentar el delay a 500ms para que sea más visible el mensaje de carga
+    }, 500)
   }, [currentPage, loading, hasMore, searchTerm, statusFilter, operationFilter, dateRange, sortConfig])
 
   // Efecto para cargar transacciones iniciales y cuando cambien los filtros
@@ -603,7 +612,7 @@ export default function TransactionsTab() {
       const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
       const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
       const clientHeight = document.documentElement.clientHeight || window.innerHeight
-      const scrolledToBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 50 // 50px antes del final
+      const scrolledToBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 50
 
       if (scrolledToBottom && !loading && hasMore) {
         loadMoreTransactions()
@@ -615,7 +624,7 @@ export default function TransactionsTab() {
   }, [loadMoreTransactions, loading, hasMore])
 
   // Función para cambiar el orden
-  const requestSort = (key: string) => {
+  const requestSort = (key: string): void => {
     let direction: "asc" | "desc" = "asc"
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc"
@@ -627,19 +636,17 @@ export default function TransactionsTab() {
   }
 
   // Función para obtener el indicador de dirección de ordenamiento
-  const getSortDirection = (key: string) => {
+  const getSortDirection = (key: string): string => {
     if (sortConfig.key === key) {
       return sortConfig.direction === "asc" ? " ↑" : " ↓"
     }
     return ""
   }
 
-  const filteredTransactions = getFilteredTransactions()
-
   return (
     <div className="h-full bg-paydece-gradient overflow-hidden">
       <div className="h-full overflow-y-auto">
-        {/* Stats Cards - Sin espacios, con bordes redondeados */}
+        {/* Stats Cards */}
         <div className="grid md:grid-cols-2 border-b border-gray-300">
           <Card className="paydece-card rounded-tl-lg rounded-tr-none rounded-bl-none rounded-br-none border-r border-gray-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-2">
@@ -660,7 +667,7 @@ export default function TransactionsTab() {
           </Card>
         </div>
 
-        {/* Filters - Sin espacios, con borde redondeado */}
+        {/* Filters */}
         <Card className="paydece-card rounded-none border-b border-gray-300">
           <CardHeader className="pb-1 px-3 pt-2">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -786,7 +793,7 @@ export default function TransactionsTab() {
           </CardContent>
         </Card>
 
-        {/* Transactions Table - Sin espacios, más compacto, con bordes redondeados en la parte inferior */}
+        {/* Transactions Table */}
         <Card className="paydece-card rounded-bl-lg rounded-br-lg rounded-tl-none rounded-tr-none flex-1">
           <CardContent className="p-0 h-full">
             <div className="overflow-hidden h-full">
