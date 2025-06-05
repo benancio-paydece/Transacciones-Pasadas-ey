@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { CalendarIcon, Filter, Search, Download, RotateCcw } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -241,7 +241,11 @@ export default function TransactionsTab() {
   const [currentPage, setCurrentPage] = useState(0)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-  const ITEMS_PER_PAGE = 10
+  const [initialLoad, setInitialLoad] = useState(true)
+  const ITEMS_PER_PAGE = 30
+
+  // Ref para el contenedor de scroll
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // Definir allTransactions PRIMERO
   const allTransactions: Transaction[] = [
@@ -341,7 +345,7 @@ export default function TransactionsTab() {
       net: 3104.0,
     },
     // Agregamos más transacciones para simular scroll infinito con fechas recientes
-    ...Array.from({ length: 50 }, (_, i): Transaction => {
+    ...Array.from({ length: 150 }, (_, i): Transaction => {
       const randomDaysAgo = Math.floor(Math.random() * 25) + 1
       const date = new Date()
       date.setDate(date.getDate() - randomDaysAgo)
@@ -387,7 +391,7 @@ export default function TransactionsTab() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(volumeUSDC)
-  }, [])
+  }, [allTransactions.length])
 
   // NUEVA LÓGICA: Transacciones completadas (últimos 30 días)
   const completedTransactionsCount = useMemo(() => {
@@ -403,7 +407,7 @@ export default function TransactionsTab() {
       }
       return count
     }, 0)
-  }, [allTransactions])
+  }, [allTransactions.length])
 
   // NUEVA LÓGICA: Órdenes en proceso
   const ordersInProcessCount = useMemo(() => {
@@ -427,6 +431,7 @@ export default function TransactionsTab() {
     setCurrentPage(0)
     setDisplayedTransactions([])
     setHasMore(true)
+    setInitialLoad(true)
   }
 
   // Función para descargar resumen
@@ -445,6 +450,7 @@ export default function TransactionsTab() {
     setCurrentPage(0)
     setDisplayedTransactions([])
     setHasMore(true)
+    setInitialLoad(true)
   }
 
   // Función para obtener transacciones filtradas
@@ -564,11 +570,14 @@ export default function TransactionsTab() {
       })
   }
 
-  // Función para cargar más transacciones
+  // Función para cargar más transacciones MEJORADA
   const loadMoreTransactions = useCallback(() => {
     if (loading || !hasMore) return
 
     setLoading(true)
+
+    // Simular delay de red solo en la carga inicial
+    const delay = initialLoad ? 800 : 300
 
     setTimeout(() => {
       const filteredTransactions = getFilteredTransactions()
@@ -585,11 +594,19 @@ export default function TransactionsTab() {
           setDisplayedTransactions((prev) => [...prev, ...newTransactions])
         }
         setCurrentPage((prev) => prev + 1)
+
+        // Si hay más datos disponibles, mantener hasMore en true
+        if (endIndex < filteredTransactions.length) {
+          setHasMore(true)
+        } else {
+          setHasMore(false)
+        }
       }
 
       setLoading(false)
-    }, 500)
-  }, [currentPage, loading, hasMore, searchTerm, statusFilter, operationFilter, dateRange, sortConfig])
+      setInitialLoad(false)
+    }, delay)
+  }, [currentPage, loading, hasMore, searchTerm, statusFilter, operationFilter, dateRange, sortConfig, initialLoad])
 
   // Efecto para cargar transacciones iniciales y cuando cambien los filtros
   useEffect(() => {
@@ -597,6 +614,7 @@ export default function TransactionsTab() {
     setCurrentPage(0)
     setHasMore(true)
     setLoading(false)
+    setInitialLoad(true)
   }, [searchTerm, statusFilter, operationFilter, dateRange, sortConfig])
 
   // Efecto separado para cargar datos cuando se resetean los filtros
@@ -606,21 +624,29 @@ export default function TransactionsTab() {
     }
   }, [displayedTransactions.length, loading, hasMore, loadMoreTransactions])
 
-  // Efecto para scroll infinito mejorado
+  // Efecto para scroll infinito MEJORADO - usando el contenedor específico
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-      const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
-      const clientHeight = document.documentElement.clientHeight || window.innerHeight
-      const scrolledToBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 50
+      if (!scrollContainerRef.current) return
+
+      const container = scrollContainerRef.current
+      const scrollTop = container.scrollTop
+      const scrollHeight = container.scrollHeight
+      const clientHeight = container.clientHeight
+
+      // Detectar cuando estamos cerca del final (100px antes)
+      const scrolledToBottom = scrollTop + clientHeight >= scrollHeight - 100
 
       if (scrolledToBottom && !loading && hasMore) {
         loadMoreTransactions()
       }
     }
 
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener("scroll", handleScroll)
+      return () => container.removeEventListener("scroll", handleScroll)
+    }
   }, [loadMoreTransactions, loading, hasMore])
 
   // Función para cambiar el orden
@@ -633,6 +659,7 @@ export default function TransactionsTab() {
     setCurrentPage(0)
     setDisplayedTransactions([])
     setHasMore(true)
+    setInitialLoad(true)
   }
 
   // Función para obtener el indicador de dirección de ordenamiento
@@ -645,78 +672,86 @@ export default function TransactionsTab() {
 
   return (
     <div className="h-full bg-paydece-gradient overflow-hidden">
-      <div className="h-full overflow-y-auto">
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 border-b border-gray-300">
-          <Card className="paydece-card rounded-tl-lg rounded-tr-none rounded-bl-none rounded-br-none border-r border-gray-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-2">
-              <CardTitle className="text-xs font-medium">Volumen Mensual (últimos 30 días)</CardTitle>
+      <div ref={scrollContainerRef} className="h-full overflow-y-auto">
+        {/* Stats Cards - Mejorados con bordes redondeados y mejor espaciado */}
+        <div className="grid md:grid-cols-2">
+          <Card className="paydece-card rounded-tl-xl rounded-tr-none rounded-bl-none rounded-br-none border-r-0 border-gray-400">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-3">
+              <CardTitle className="text-base font-semibold">Volumen Mensual (últimos 30 días)</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 pb-2 px-3">
-              <div className="text-sm font-bold text-paydece-blue">{monthlyVolume} USDC</div>
+            <CardContent className="pt-0 pb-3 px-5">
+              <div className="text-2xl font-bold text-paydece-blue">{monthlyVolume} USDC</div>
             </CardContent>
           </Card>
-          <Card className="paydece-card rounded-tl-none rounded-tr-lg rounded-bl-none rounded-br-none">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-2">
-              <CardTitle className="text-xs font-medium">Transacciones completadas (últimos 30 días)</CardTitle>
+          <Card className="paydece-card rounded-tl-none rounded-tr-xl rounded-bl-none rounded-br-none">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-3">
+              <CardTitle className="text-base font-semibold">Transacciones completadas (últimos 30 días)</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 pb-2 px-3">
-              <div className="text-sm font-bold text-paydece-blue">{completedTransactionsCount}</div>
-              <p className="text-xs text-muted-foreground">{ordersInProcessCount} órdenes en proceso</p>
+            <CardContent className="pt-0 pb-3 px-5">
+              <div className="text-2xl font-bold text-paydece-blue">{completedTransactionsCount}</div>
+              <p className="text-base text-muted-foreground">{ordersInProcessCount} órdenes en proceso</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="paydece-card rounded-none border-b border-gray-300">
-          <CardHeader className="pb-1 px-3 pt-2">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <CardTitle className="flex items-center gap-2 text-xs">
-                <Filter className="h-3 w-3" />
+        {/* Contenedor especial para la unión redondeada entre las dos tarjetas */}
+        <div className="flex justify-center">
+          <div className="w-full flex">
+            <div className="w-1/2 h-4 bg-white border-l-2 border-b-2 border-gray-400 rounded-bl-xl"></div>
+            <div className="w-1/2 h-4 bg-white border-r-2 border-b-2 border-gray-400 rounded-br-xl"></div>
+          </div>
+        </div>
+
+        {/* Filters - Mejorados con mejor espaciado */}
+        <Card className="paydece-card rounded-xl border-gray-400 mt-0">
+          <CardHeader className="pb-2 px-5 pt-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <Filter className="h-4 w-4" />
                 Filtros
               </CardTitle>
-              <div className="flex gap-1">
+              <div className="flex gap-2">
                 <Button
                   onClick={clearFilters}
                   variant="outline"
-                  className="flex items-center gap-1 rounded-full text-xs px-2 py-1 h-6"
+                  className="flex items-center gap-2 rounded-full text-sm px-3 py-1.5 h-8"
                 >
-                  <RotateCcw className="h-2 w-2" />
+                  <RotateCcw className="h-3 w-3" />
                   Limpiar filtros
                 </Button>
                 <Button
                   onClick={downloadSummary}
-                  className="bg-black text-white font-medium rounded-full transition-all hover:opacity-90 flex items-center gap-1 text-xs px-2 py-1 h-6"
+                  className="bg-black text-white font-medium rounded-full transition-all hover:opacity-90 flex items-center gap-2 text-sm px-3 py-1.5 h-8"
                 >
-                  <Download className="h-2 w-2" />
+                  <Download className="h-3 w-3" />
                   Descargar resumen
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-0 pb-2 px-3">
-            <div className="grid gap-1 md:grid-cols-4">
-              <div className="space-y-1">
-                <Label htmlFor="search" className="text-xs">
+          <CardContent className="pt-0 pb-3 px-5">
+            <div className="grid gap-3 md:grid-cols-4">
+              <div className="space-y-2">
+                <Label htmlFor="search" className="text-sm font-medium">
                   Buscar
                 </Label>
                 <div className="relative">
-                  <Search className="absolute left-2 top-1.5 h-2 w-2 text-muted-foreground" />
+                  <Search className="absolute left-3 top-2 h-3 w-3 text-muted-foreground" />
                   <Input
                     id="search"
                     placeholder="Escribe 3 letras"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-6 rounded-full text-xs h-6 focus:ring-gray-500 focus:border-gray-500"
+                    className="pl-8 rounded-full text-sm h-8 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="status" className="text-xs">
+              <div className="space-y-2">
+                <Label htmlFor="status" className="text-sm font-medium">
                   Estado
                 </Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="rounded-full text-xs h-6 focus:ring-gray-500 focus:border-gray-500">
+                  <SelectTrigger className="rounded-full text-sm h-8 focus:ring-gray-500 focus:border-gray-500">
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -732,12 +767,12 @@ export default function TransactionsTab() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="operation" className="text-xs">
+              <div className="space-y-2">
+                <Label htmlFor="operation" className="text-sm font-medium">
                   Operación
                 </Label>
                 <Select value={operationFilter} onValueChange={handleOperationFilterChange}>
-                  <SelectTrigger className="rounded-full text-xs h-6 focus:ring-gray-500 focus:border-gray-500">
+                  <SelectTrigger className="rounded-full text-sm h-8 focus:ring-gray-500 focus:border-gray-500">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
@@ -747,8 +782,8 @@ export default function TransactionsTab() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="date" className="text-xs">
+              <div className="space-y-2">
+                <Label htmlFor="date" className="text-sm font-medium">
                   Fecha
                 </Label>
                 <Popover>
@@ -757,11 +792,11 @@ export default function TransactionsTab() {
                       id="date"
                       variant={"outline"}
                       className={cn(
-                        "w-full justify-start text-left font-normal rounded-full text-xs h-6 focus:ring-gray-500 focus:border-gray-500",
+                        "w-full justify-start text-left font-normal rounded-full text-sm h-8 focus:ring-gray-500 focus:border-gray-500",
                         !dateRange.from && !dateRange.to && "text-muted-foreground",
                       )}
                     >
-                      <CalendarIcon className="mr-1 h-2 w-2" />
+                      <CalendarIcon className="mr-2 h-3 w-3" />
                       {dateRange.from ? (
                         dateRange.to ? (
                           <>
@@ -793,51 +828,51 @@ export default function TransactionsTab() {
           </CardContent>
         </Card>
 
-        {/* Transactions Table */}
-        <Card className="paydece-card rounded-bl-lg rounded-br-lg rounded-tl-none rounded-tr-none flex-1">
+        {/* Transactions Table - Mejorado con bordes redondeados */}
+        <Card className="paydece-card rounded-xl border-gray-400 mt-4 flex-1">
           <CardContent className="p-0 h-full">
             <div className="overflow-hidden h-full">
               <Table>
                 <TableHeader className="bg-gray-50">
                   <TableRow>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[12%] text-center"
+                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
                       onClick={() => requestSort("timestamp")}
                     >
                       Fecha{getSortDirection("timestamp")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[18%] text-center"
+                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[18%] text-center font-semibold"
                       onClick={() => requestSort("counterparty")}
                     >
                       Contraparte{getSortDirection("counterparty")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[12%] text-center"
+                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
                       onClick={() => requestSort("crypto")}
                     >
                       Cripto{getSortDirection("crypto")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[12%] text-center"
+                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
                       onClick={() => requestSort("fiat")}
                     >
                       FIAT{getSortDirection("fiat")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[10%] text-center"
+                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[10%] text-center font-semibold"
                       onClick={() => requestSort("operation")}
                     >
                       Operación{getSortDirection("operation")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[14%] text-center"
+                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[14%] text-center font-semibold"
                       onClick={() => requestSort("id")}
                     >
                       # Transacción{getSortDirection("id")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-xs py-1 px-2 w-[12%] text-center"
+                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
                       onClick={() => requestSort("status")}
                     >
                       Estado{getSortDirection("status")}
@@ -850,44 +885,44 @@ export default function TransactionsTab() {
                     return (
                       <TableRow
                         key={transaction.id}
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="cursor-pointer hover:bg-gray-50 transition-colors"
                         onClick={() => handleRowClick(transaction)}
                       >
-                        <TableCell className="py-1 px-2 w-[12%]">
+                        <TableCell className="py-2 px-3 w-[12%]">
                           <div className="flex flex-col text-center">
-                            <span className="text-xs">{localDateTime.date}</span>
+                            <span className="text-sm font-medium">{localDateTime.date}</span>
                             <span className="text-xs text-muted-foreground">
                               {localDateTime.time} {localDateTime.utc}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="py-1 px-2 w-[18%]">
+                        <TableCell className="py-2 px-3 w-[18%]">
                           <div className="flex flex-col text-center">
-                            <span className="font-medium text-xs">
+                            <span className="font-medium text-sm">
                               {truncateWallet(transaction.counterparty.wallet)}
                             </span>
                             <span className="text-xs text-muted-foreground">{transaction.counterparty.telegram}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-xs py-1 px-2 w-[12%] text-center">
+                        <TableCell className="font-medium text-sm py-2 px-3 w-[12%] text-center">
                           <div className="flex flex-col">
-                            <span className="text-xs">{formatCrypto(transaction.cryptoAmount)}</span>
+                            <span className="text-sm">{formatCrypto(transaction.cryptoAmount)}</span>
                             <span className="text-xs text-muted-foreground">{transaction.cryptoCurrency}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-xs py-1 px-2 w-[12%] text-center">
+                        <TableCell className="font-medium text-sm py-2 px-3 w-[12%] text-center">
                           <div className="flex flex-col">
-                            <span className="text-xs">{formatFiat(transaction.fiatAmount)}</span>
+                            <span className="text-sm">{formatFiat(transaction.fiatAmount)}</span>
                             <span className="text-xs text-muted-foreground">{transaction.fiatCurrency}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="py-1 px-2 w-[10%] text-center">
+                        <TableCell className="py-2 px-3 w-[10%] text-center">
                           {getOperationBadge(transaction.operation)}
                         </TableCell>
-                        <TableCell className="font-medium text-xs py-1 px-2 w-[14%] text-center">
+                        <TableCell className="font-medium text-sm py-2 px-3 w-[14%] text-center">
                           {transaction.id}
                         </TableCell>
-                        <TableCell className="py-1 px-2 w-[12%] text-center">
+                        <TableCell className="py-2 px-3 w-[12%] text-center">
                           {getStatusBadge(transaction.status)}
                         </TableCell>
                       </TableRow>
@@ -895,19 +930,35 @@ export default function TransactionsTab() {
                   })}
                 </TableBody>
               </Table>
-              {loading && displayedTransactions.length > 0 && (
-                <div className="flex justify-center py-2 border-t border-gray-200">
-                  <div className="text-xs text-muted-foreground">Cargando órdenes...</div>
+
+              {/* Indicadores de carga y estado MEJORADOS */}
+              {initialLoad && loading && (
+                <div className="flex justify-center py-8 border-t border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-paydece-blue"></div>
+                    <div className="text-sm text-muted-foreground font-medium">Cargando transacciones...</div>
+                  </div>
                 </div>
               )}
-              {!hasMore && displayedTransactions.length > 0 && (
-                <div className="flex justify-center py-2 border-t border-gray-200">
-                  <div className="text-xs text-muted-foreground">No hay más transacciones para mostrar</div>
+
+              {loading && !initialLoad && displayedTransactions.length > 0 && (
+                <div className="flex justify-center py-4 border-t border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-paydece-blue"></div>
+                    <div className="text-sm text-muted-foreground">Cargando más órdenes...</div>
+                  </div>
                 </div>
               )}
+
+              {!hasMore && displayedTransactions.length > 0 && !loading && (
+                <div className="flex justify-center py-4 border-t border-gray-200">
+                  <div className="text-sm text-muted-foreground">No hay más transacciones para mostrar</div>
+                </div>
+              )}
+
               {displayedTransactions.length === 0 && !loading && (
-                <div className="flex justify-center py-4">
-                  <div className="text-xs text-muted-foreground">No se encontraron transacciones</div>
+                <div className="flex justify-center py-8">
+                  <div className="text-sm text-muted-foreground">No se encontraron transacciones</div>
                 </div>
               )}
             </div>

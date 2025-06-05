@@ -87,7 +87,7 @@
 }
 
 .paydece-card {
-  @apply bg-white shadow-none border border-gray-300;
+  @apply bg-white shadow-none border-2 border-gray-400;
 }
 
 .paydece-badge-green {
@@ -134,4 +134,30 @@ button:focus {
 /* Personalizar el ring de Tailwind para elementos específicos */
 .ring-gray-500 {
   --tw-ring-color: #999999;
+}
+
+/* Bordes internos redondeados para las celdas de la tabla */
+.table-cell-border {
+  border-right: 2px solid #9ca3af;
+  border-radius: 0 8px 8px 0;
+}
+
+.table-cell-border:last-child {
+  border-right: none;
+}
+
+/* Líneas horizontales más gruesas en la tabla */
+tbody tr {
+  border-bottom: 1px solid #d1d5db;
+}
+
+tbody tr:hover {
+  border-bottom: 1px solid #9ca3af;
+}
+
+/* Separadores internos más visibles */
+.internal-separator {
+  border-color: #9ca3af;
+  border-width: 2px;
+  border-radius: 4px;
 }
