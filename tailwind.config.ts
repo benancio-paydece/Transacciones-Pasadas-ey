@@ -20,17 +20,7 @@ const config = {
     },
     extend: {
       fontFamily: {
-        sans: [
-          "Inter",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "Roboto",
-          "Oxygen",
-          "Ubuntu",
-          "Cantarell",
-          "sans-serif",
-        ],
+        sans: ["Roboto", "Helvetica", "Arial", "sans-serif"],
       },
       colors: {
         paydece: {

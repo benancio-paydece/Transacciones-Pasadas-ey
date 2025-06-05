@@ -692,8 +692,8 @@ export default function TransactionsTab() {
     <div className="h-full bg-paydece-gradient overflow-hidden">
       <div ref={scrollContainerRef} className="h-full overflow-y-auto">
         {/* Stats Cards - Con redondeo correcto en la intersección */}
-        <div className="grid md:grid-cols-2 border border-gray-300 overflow-hidden">
-          <Card className="bg-white border-0 rounded-none border-r border-gray-300">
+        <div className="grid md:grid-cols-2 border border-gray-200 overflow-hidden">
+          <Card className="bg-white border-0 rounded-none border-r border-gray-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-3">
               <CardTitle className="text-base font-semibold">Volumen Mensual (últimos 30 días)</CardTitle>
             </CardHeader>
@@ -713,8 +713,8 @@ export default function TransactionsTab() {
         </div>
 
         {/* Filters - Sin espaciado superior */}
-        <Card className="paydece-card rounded-none border border-gray-300 border-b-0">
-          <CardHeader className="pb-2 px-5 pt-3">
+        <Card className="paydece-card rounded-none border-l border-r border-gray-200">
+          <CardHeader className="pb-2 px-5 pt-1">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
                 <Filter className="h-4 w-4" />
@@ -839,7 +839,7 @@ export default function TransactionsTab() {
         </Card>
 
         {/* Transactions Table - Sin espaciado superior */}
-        <Card className="paydece-card rounded-bl-xl rounded-br-xl rounded-tl-none rounded-tr-none border-t-0 border-gray-400 flex-1">
+        <Card className="paydece-card rounded-bl-xl rounded-br-xl rounded-tl-none rounded-tr-none border-t-0 border-gray-200 flex-1">
           <CardContent className="p-0 h-full">
             <div className="overflow-hidden h-full">
               <Table>
