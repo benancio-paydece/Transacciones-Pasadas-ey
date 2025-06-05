@@ -242,7 +242,7 @@ export default function TransactionsTab() {
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [initialLoad, setInitialLoad] = useState(true)
-  const ITEMS_PER_PAGE = 30
+  const ITEMS_PER_PAGE = 10
 
   // Ref para el contenedor de scroll
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -344,7 +344,7 @@ export default function TransactionsTab() {
       fee: 96.0,
       net: 3104.0,
     },
-    // Agregamos más transacciones para simular scroll infinito con fechas recientes
+    // Agregamos más transacciones para simular scroll infinito (carga inicial de 10)
     ...Array.from({ length: 150 }, (_, i): Transaction => {
       const randomDaysAgo = Math.floor(Math.random() * 25) + 1
       const date = new Date()
@@ -438,7 +438,7 @@ export default function TransactionsTab() {
       }
       return count
     }, 0)
-  }, [allTransactions.length, allTransactions])
+  }, [allTransactions])
 
   // Función para limpiar filtros
   const clearFilters = (): void => {
