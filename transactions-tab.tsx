@@ -412,14 +412,15 @@ export default function TransactionsTab() {
   // NUEVA LÓGICA: Órdenes en proceso
   const ordersInProcessCount = useMemo(() => {
     const processStatuses = ["iniciada", "en custodia", "pagado", "apelado"]
+    const allTransactionsValue = allTransactions
 
-    return allTransactions.reduce((count, transaction) => {
+    return allTransactionsValue.reduce((count, transaction) => {
       if (processStatuses.includes(transaction.status)) {
         return count + 1
       }
       return count
     }, 0)
-  }, [allTransactions])
+  }, [allTransactions.length, allTransactions])
 
   // Función para limpiar filtros
   const clearFilters = (): void => {
@@ -673,9 +674,9 @@ export default function TransactionsTab() {
   return (
     <div className="h-full bg-paydece-gradient overflow-hidden">
       <div ref={scrollContainerRef} className="h-full overflow-y-auto">
-        {/* Stats Cards - Mejorados con bordes redondeados y mejor espaciado */}
+        {/* Stats Cards - Con redondeo correcto en la intersección */}
         <div className="grid md:grid-cols-2">
-          <Card className="paydece-card rounded-tl-xl rounded-tr-none rounded-bl-none rounded-br-none border-r-0 border-gray-400">
+          <Card className="paydece-card rounded-tl-xl rounded-tr-none rounded-bl-none rounded-br-lg border-r border-gray-400">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-3">
               <CardTitle className="text-base font-semibold">Volumen Mensual (últimos 30 días)</CardTitle>
             </CardHeader>
@@ -683,7 +684,7 @@ export default function TransactionsTab() {
               <div className="text-2xl font-bold text-paydece-blue">{monthlyVolume} USDC</div>
             </CardContent>
           </Card>
-          <Card className="paydece-card rounded-tl-none rounded-tr-xl rounded-bl-none rounded-br-none">
+          <Card className="paydece-card rounded-tl-none rounded-tr-xl rounded-bl-lg rounded-br-none">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-3">
               <CardTitle className="text-base font-semibold">Transacciones completadas (últimos 30 días)</CardTitle>
             </CardHeader>
@@ -694,16 +695,8 @@ export default function TransactionsTab() {
           </Card>
         </div>
 
-        {/* Contenedor especial para la unión redondeada entre las dos tarjetas */}
-        <div className="flex justify-center">
-          <div className="w-full flex">
-            <div className="w-1/2 h-4 bg-white border-l-2 border-b-2 border-gray-400 rounded-bl-xl"></div>
-            <div className="w-1/2 h-4 bg-white border-r-2 border-b-2 border-gray-400 rounded-br-xl"></div>
-          </div>
-        </div>
-
-        {/* Filters - Mejorados con mejor espaciado */}
-        <Card className="paydece-card rounded-xl border-gray-400 mt-0">
+        {/* Filters - Sin espaciado superior */}
+        <Card className="paydece-card rounded-none border-t-0 border-gray-400">
           <CardHeader className="pb-2 px-5 pt-3">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -828,8 +821,8 @@ export default function TransactionsTab() {
           </CardContent>
         </Card>
 
-        {/* Transactions Table - Mejorado con bordes redondeados */}
-        <Card className="paydece-card rounded-xl border-gray-400 mt-4 flex-1">
+        {/* Transactions Table - Sin espaciado superior */}
+        <Card className="paydece-card rounded-bl-xl rounded-br-xl rounded-tl-none rounded-tr-none border-t-0 border-gray-400 flex-1">
           <CardContent className="p-0 h-full">
             <div className="overflow-hidden h-full">
               <Table>
