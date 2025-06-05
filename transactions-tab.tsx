@@ -827,15 +827,12 @@ export default function TransactionsTab() {
                       className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
                       onClick={() => handleRowClick(transaction)}
                     >
-                      {/* Header con estado y operación */}
+                      {/* Header con estado como título y operación */}
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {formatStatus(transaction.status)}
-                          </span>
-                          <span className="text-xs text-gray-500">{formatOperation(transaction.operation)}</span>
+                          {getStatusBadge(transaction.status)}
+                          <span className="text-xs text-gray-500 mt-1">{formatOperation(transaction.operation)}</span>
                         </div>
-                        <div>{getStatusBadge(transaction.status)}</div>
                       </div>
 
                       {/* Información principal */}
