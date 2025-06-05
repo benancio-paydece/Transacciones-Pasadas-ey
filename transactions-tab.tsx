@@ -359,9 +359,27 @@ export default function TransactionsTab() {
         cryptoCurrency: "USDC",
         fiatAmount: Math.floor(Math.random() * 5000000) + 100000,
         fiatCurrency: ["ARS", "EUR", "USD"][Math.floor(Math.random() * 3)],
-        status: ["iniciada", "en custodia", "pagado", "finalizado", "cancelado", "reembolsado", "apelado", "liberado"][
-          Math.floor(Math.random() * 8)
-        ],
+        status: (() => {
+          // Distribución fija de estados basada en el índice
+          const statusDistribution = [
+            "finalizado",
+            "finalizado",
+            "finalizado",
+            "finalizado",
+            "finalizado", // 33% finalizadas
+            "iniciada",
+            "iniciada",
+            "en custodia",
+            "en custodia",
+            "pagado", // 33% en proceso
+            "cancelado",
+            "reembolsado",
+            "apelado",
+            "liberado",
+            "transferido", // 33% otros estados
+          ]
+          return statusDistribution[i % statusDistribution.length]
+        })(),
         operation: ["compra", "venta"][Math.floor(Math.random() * 2)],
         counterparty: {
           wallet: `0x${Math.random().toString(16).substr(2, 20)}${Math.random().toString(16).substr(2, 20)}`,
