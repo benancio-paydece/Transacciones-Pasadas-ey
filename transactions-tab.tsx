@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { CalendarIcon, Filter, Search, Download, RotateCcw } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -248,196 +248,35 @@ export default function TransactionsTab() {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // Definir allTransactions PRIMERO
-  const allTransactions: Transaction[] = [
-    {
-      id: "TXN-001",
-      date: "15/12/2024",
-      time: "14:30",
-      timestamp: new Date("2024-12-15T14:30:00Z").getTime(),
-      cryptoAmount: 1250.0,
-      cryptoCurrency: "USDC",
-      fiatAmount: 1312500.0,
-      fiatCurrency: "ARS",
-      status: "finalizado",
-      operation: "compra",
-      counterparty: {
-        wallet: "0x1234567890abcdef1234567890abcdef12345678",
-        telegram: "@maria_crypto",
-      },
-      reference: "REF-2024-001",
-      fee: 37.5,
-      net: 1212.5,
-    },
-    {
-      id: "TXN-002",
-      date: "15/12/2024",
-      time: "12:15",
-      timestamp: new Date("2024-12-15T12:15:00Z").getTime(),
-      cryptoAmount: 850.0,
-      cryptoCurrency: "USDC",
-      fiatAmount: 765.0,
-      fiatCurrency: "EUR",
-      status: "finalizado",
-      operation: "venta",
-      counterparty: {
-        wallet: "0x9876543210fedcba9876543210fedcba98765432",
-        telegram: "@carlos_trader",
-      },
-      reference: "REF-2024-002",
-      fee: 25.5,
-      net: 824.5,
-    },
-    {
-      id: "TXN-003",
-      date: "14/12/2024",
-      time: "16:45",
-      timestamp: new Date("2024-12-14T16:45:00Z").getTime(),
-      cryptoAmount: 2100.0,
-      cryptoCurrency: "USDC",
-      fiatAmount: 2100.0,
-      fiatCurrency: "USD",
-      status: "finalizado",
-      operation: "compra",
-      counterparty: {
-        wallet: "0x5555555555555555555555555555555555555555",
-        telegram: "@ana_defi",
-      },
-      reference: "REF-2024-003",
-      fee: 63.0,
-      net: 2037.0,
-    },
-    {
-      id: "TXN-004",
-      date: "14/12/2024",
-      time: "09:20",
-      timestamp: new Date("2024-12-14T09:20:00Z").getTime(),
-      cryptoAmount: 450.0,
-      cryptoCurrency: "USDC",
-      fiatAmount: 472500.0,
-      fiatCurrency: "ARS",
-      status: "cancelado",
-      operation: "venta",
-      counterparty: {
-        wallet: "0x7777777777777777777777777777777777777777",
-        telegram: "@luis_p2p",
-      },
-      reference: "REF-2024-004",
-      fee: 0.0,
-      net: 0.0,
-    },
-    {
-      id: "TXN-005",
-      date: "13/12/2024",
-      time: "11:55",
-      timestamp: new Date("2024-12-13T11:55:00Z").getTime(),
-      cryptoAmount: 3200.0,
-      cryptoCurrency: "USDC",
-      fiatAmount: 2880.0,
-      fiatCurrency: "EUR",
-      status: "finalizado",
-      operation: "compra",
-      counterparty: {
-        wallet: "0x2222222222222222222222222222222222222222",
-        telegram: "@sofia_btc",
-      },
-      reference: "REF-2024-005",
-      fee: 96.0,
-      net: 3104.0,
-    },
-    // Agregamos más transacciones para simular scroll infinito (carga inicial de 10)
-    ...Array.from({ length: 150 }, (_, i): Transaction => {
-      const randomDaysAgo = Math.floor(Math.random() * 25) + 1
-      const date = new Date()
-      date.setDate(date.getDate() - randomDaysAgo)
+  // TODO: Conectar API para cargar transacciones
+  // Reemplazar este array estático con llamada a endpoint
+  // const allTransactions: Transaction[] = [...]
 
-      return {
-        id: `TXN-${String(i + 6).padStart(3, "0")}`,
-        date: `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`,
-        time: `${String(Math.floor(Math.random() * 24)).padStart(2, "0")}:${String(Math.floor(Math.random() * 60)).padStart(2, "0")}`,
-        timestamp: date.getTime(),
-        cryptoAmount: Math.floor(Math.random() * 5000) + 100,
-        cryptoCurrency: "USDC",
-        fiatAmount: Math.floor(Math.random() * 5000000) + 100000,
-        fiatCurrency: ["ARS", "EUR", "USD"][Math.floor(Math.random() * 3)],
-        status: (() => {
-          // Distribución fija de estados basada en el índice
-          const statusDistribution = [
-            "finalizado",
-            "finalizado",
-            "finalizado",
-            "finalizado",
-            "finalizado", // 33% finalizadas
-            "iniciada",
-            "iniciada",
-            "en custodia",
-            "en custodia",
-            "pagado", // 33% en proceso
-            "cancelado",
-            "reembolsado",
-            "apelado",
-            "liberado",
-            "transferido", // 33% otros estados
-          ]
-          return statusDistribution[i % statusDistribution.length]
-        })(),
-        operation: ["compra", "venta"][Math.floor(Math.random() * 2)],
-        counterparty: {
-          wallet: `0x${Math.random().toString(16).substr(2, 20)}${Math.random().toString(16).substr(2, 20)}`,
-          telegram: `@user_${i + 6}`,
-        },
-        reference: `REF-2024-${String(i + 6).padStart(3, "0")}`,
-        fee: Math.floor(Math.random() * 100) + 10,
-        net: Math.floor(Math.random() * 4900) + 90,
-      }
-    }),
-  ]
+  // Placeholder temporal - reemplazar con datos de API
+  const allTransactions: Transaction[] = []
 
   // Calcular volumen mensual de USDC en los últimos 30 días
-  const monthlyVolume = useMemo(() => {
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  // TODO: Conectar API para obtener volumen mensual
+  // const monthlyVolume = useMemo(() => {
+  //   // Lógica eliminada - reemplazar con llamada a API
+  // }, [])
 
-    const volumeUSDC = allTransactions
-      .filter((transaction) => {
-        const txDate = new Date(transaction.timestamp)
-        return txDate >= thirtyDaysAgo && transaction.status === "finalizado" && transaction.cryptoCurrency === "USDC"
-      })
-      .reduce((total, transaction) => total + transaction.cryptoAmount, 0)
-
-    return new Intl.NumberFormat("es-ES", {
-      style: "decimal",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(volumeUSDC)
-  }, [allTransactions.length])
+  // Placeholder temporal - reemplazar con datos de API
+  const monthlyVolume = "0"
 
   // NUEVA LÓGICA: Transacciones completadas (últimos 30 días)
-  const completedTransactionsCount = useMemo(() => {
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  // TODO: Conectar API para obtener estadísticas de transacciones
+  // const completedTransactionsCount = useMemo(() => {
+  //   // Lógica eliminada - reemplazar con llamada a API
+  // }, [])
 
-    return allTransactions.reduce((count, transaction) => {
-      if (transaction.status === "finalizado") {
-        const txDate = new Date(transaction.timestamp)
-        if (txDate >= thirtyDaysAgo) {
-          return count + 1
-        }
-      }
-      return count
-    }, 0)
-  }, [allTransactions.length])
+  // const ordersInProcessCount = useMemo(() => {
+  //   // Lógica eliminada - reemplazar con llamada a API
+  // }, [])
 
-  // NUEVA LÓGICA: Órdenes en proceso
-  const ordersInProcessCount = useMemo(() => {
-    const processStatuses = ["iniciada", "en custodia", "pagado", "apelado"]
-
-    return allTransactions.reduce((count, transaction) => {
-      if (processStatuses.includes(transaction.status)) {
-        return count + 1
-      }
-      return count
-    }, 0)
-  }, [allTransactions.length])
+  // Placeholders temporales - reemplazar con datos de API
+  const completedTransactionsCount = 0
+  const ordersInProcessCount = 0
 
   // Función para limpiar filtros
   const clearFilters = (): void => {
@@ -473,6 +312,8 @@ export default function TransactionsTab() {
 
   // Función para obtener transacciones filtradas
   const getFilteredTransactions = (): Transaction[] => {
+    // TODO: Esta función debería hacer llamada a API con parámetros de filtro
+    // en lugar de filtrar localmente
     return allTransactions
       .filter((transaction) => {
         const searchLower = searchTerm.toLowerCase().trim()
