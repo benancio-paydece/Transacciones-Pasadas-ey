@@ -316,38 +316,6 @@ const TransactionsTab = () => {
   const completedTransactionsCount = 1
   const ordersInProcessCount = 0
 
-  // Función para limpiar filtros
-  const clearFilters = (): void => {
-    setSearchTerm("")
-    setStatusFilter("all")
-    setOperationFilter("all")
-    setDateRange({ from: undefined, to: undefined })
-    setSortConfig({ key: "timestamp", direction: "desc" })
-    setCurrentPage(0)
-    setDisplayedTransactions([])
-    setHasMore(true)
-    setInitialLoad(true)
-  }
-
-  // Función para descargar resumen
-  const downloadSummary = (): void => {
-    const filteredData = getFilteredTransactions()
-    const filename = `resumen_transacciones_paydece_${new Date().toISOString().split("T")[0]}.csv`
-    downloadCSV(filteredData, filename)
-  }
-
-  // Función para manejar cambio en filtro de operación
-  const handleOperationFilterChange = (value: string): void => {
-    setOperationFilter(value)
-    if (value === "compra" || value === "venta") {
-      setSortConfig({ key: "timestamp", direction: "desc" })
-    }
-    setCurrentPage(0)
-    setDisplayedTransactions([])
-    setHasMore(true)
-    setInitialLoad(true)
-  }
-
   // Función para obtener transacciones filtradas
   const getFilteredTransactions = (): Transaction[] => {
     // TODO: Esta función debería hacer llamada a API con parámetros de filtro
@@ -503,18 +471,157 @@ const TransactionsTab = () => {
       setLoading(false)
       setInitialLoad(false)
     }, delay)
-  }, [
-    currentPage,
-    loading,
-    hasMore,
-    searchTerm,
-    statusFilter,
-    operationFilter,
-    dateRange,
-    sortConfig,
-    initialLoad,
-    getFilteredTransactions,
-  ])
+  }, [currentPage, loading, hasMore, searchTerm, statusFilter, operationFilter, dateRange, sortConfig, initialLoad])
+
+  const filteredTransactions = useCallback((): Transaction[] => {
+    // TODO: Esta función debería hacer llamada a API con parámetros de filtro
+    // en lugar de filtrar localmente
+    return allTransactions
+      .filter((transaction) => {
+        const searchLower = searchTerm.toLowerCase().trim()
+        let matchesSearch = true
+
+        if (searchTerm.trim().length >= 3) {
+          const localDateTime = formatLocalDateTime(transaction.timestamp)
+
+          matchesSearch =
+            transaction.id.toLowerCase().startsWith(searchLower) ||
+            transaction.counterparty.wallet.toLowerCase().startsWith(searchLower) ||
+            transaction.counterparty.telegram.toLowerCase().startsWith(searchLower) ||
+            (transaction.reference && transaction.reference.toLowerCase().startsWith(searchLower)) ||
+            transaction.cryptoAmount.toString().startsWith(searchTerm.trim()) ||
+            transaction.cryptoCurrency.toLowerCase().startsWith(searchLower) ||
+            transaction.fiatAmount.toString().startsWith(searchTerm.trim()) ||
+            transaction.fiatCurrency.toLowerCase().startsWith(searchLower) ||
+            formatStatus(transaction.status).toLowerCase().startsWith(searchLower) ||
+            transaction.operation.toLowerCase().startsWith(searchLower) ||
+            localDateTime.date.startsWith(searchTerm.trim()) ||
+            localDateTime.time.startsWith(searchTerm.trim())
+        }
+
+        const matchesStatus = statusFilter === "all" || transaction.status === statusFilter
+        const matchesOperation = operationFilter === "all" || transaction.operation === operationFilter
+
+        let matchesDateRange = true
+        if (dateRange.from || dateRange.to) {
+          const txDate = new Date(transaction.timestamp)
+          if (dateRange.from && dateRange.to) {
+            matchesDateRange = txDate >= dateRange.from && txDate <= dateRange.to
+          } else if (dateRange.from) {
+            matchesDateRange = txDate >= dateRange.from
+          } else if (dateRange.to) {
+            matchesDateRange = txDate <= dateRange.to
+          }
+        }
+
+        return matchesSearch && matchesStatus && matchesOperation && matchesDateRange
+      })
+      .sort((a, b) => {
+        if (sortConfig.key === "timestamp") {
+          return sortConfig.direction === "asc" ? a.timestamp - b.timestamp : b.timestamp - a.timestamp
+        }
+
+        if (sortConfig.key === "counterparty") {
+          return sortConfig.direction === "asc"
+            ? a.counterparty.telegram.localeCompare(b.counterparty.telegram)
+            : b.counterparty.telegram.localeCompare(a.counterparty.telegram)
+        }
+
+        if (sortConfig.key === "crypto") {
+          return sortConfig.direction === "asc" ? a.cryptoAmount - b.cryptoAmount : b.cryptoAmount - a.cryptoAmount
+        }
+
+        if (sortConfig.key === "fiat") {
+          const currencyCompare = a.fiatCurrency.localeCompare(b.fiatCurrency)
+          if (currencyCompare !== 0) {
+            return sortConfig.direction === "asc" ? currencyCompare : -currencyCompare
+          }
+          return sortConfig.direction === "asc" ? a.timestamp - b.timestamp : b.timestamp - a.timestamp
+        }
+
+        if (sortConfig.key === "operation") {
+          const operationCompare = a.operation.localeCompare(b.operation)
+          if (operationCompare !== 0) {
+            return sortConfig.direction === "asc" ? operationCompare : -operationCompare
+          }
+          return b.timestamp - a.timestamp
+        }
+
+        if (sortConfig.key === "id") {
+          return sortConfig.direction === "asc" ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id)
+        }
+
+        if (sortConfig.key === "status") {
+          const getStatusPriority = (status: string): number => {
+            switch (status) {
+              case "apelado":
+                return 1
+              case "en custodia":
+                return 2
+              case "iniciada":
+                return 3
+              case "pagado":
+                return 4
+              case "finalizado":
+                return 5
+              case "cancelado":
+                return 6
+              case "reembolsado":
+                return 7
+              case "liberado":
+                return 8
+              case "transferido":
+                return 9
+              default:
+                return 10
+            }
+          }
+
+          const priorityA = getStatusPriority(a.status)
+          const priorityB = getStatusPriority(b.status)
+
+          if (priorityA !== priorityB) {
+            return sortConfig.direction === "asc" ? priorityA - priorityB : priorityB - priorityA
+          }
+
+          return b.timestamp - a.timestamp
+        }
+
+        return 0
+      })
+  }, [searchTerm, statusFilter, operationFilter, dateRange, sortConfig])
+
+  // Función para limpiar filtros
+  const clearFilters = (): void => {
+    setSearchTerm("")
+    setStatusFilter("all")
+    setOperationFilter("all")
+    setDateRange({ from: undefined, to: undefined })
+    setSortConfig({ key: "timestamp", direction: "desc" })
+    setCurrentPage(0)
+    setDisplayedTransactions([])
+    setHasMore(true)
+    setInitialLoad(true)
+  }
+
+  // Función para descargar resumen
+  const downloadSummary = (): void => {
+    const filteredData = getFilteredTransactions()
+    const filename = `resumen_transacciones_paydece_${new Date().toISOString().split("T")[0]}.csv`
+    downloadCSV(filteredData, filename)
+  }
+
+  // Función para manejar cambio en filtro de operación
+  const handleOperationFilterChange = (value: string): void => {
+    setOperationFilter(value)
+    if (value === "compra" || value === "venta") {
+      setSortConfig({ key: "timestamp", direction: "desc" })
+    }
+    setCurrentPage(0)
+    setDisplayedTransactions([])
+    setHasMore(true)
+    setInitialLoad(true)
+  }
 
   // Efecto para cargar transacciones iniciales y cuando cambien los filtros
   useEffect(() => {
@@ -723,7 +830,6 @@ const TransactionsTab = () => {
                       mode="range"
                       defaultMonth={dateRange.from}
                       selected={dateRange}
-                      onSelect={setDateRange}
                       numberOfMonths={typeof window !== "undefined" && window.innerWidth < 768 ? 1 : 2}
                       locale={es}
                     />
@@ -942,85 +1048,112 @@ const TransactionsTab = () => {
         {/* Modal de detalles de transacción */}
         {isModalOpen && selectedTransaction && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 space-y-4">
-                {/* Header del modal */}
-                <div className="flex justify-between items-start">
-                  <h2 className="text-xl font-bold text-paydece-blue">Transacción {selectedTransaction.id}</h2>
-                  <button onClick={closeModal} className="text-gray-500 hover:text-gray-700 text-2xl font-bold">
+            <div className="bg-white rounded-3xl max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl border-4 border-dashed border-gray-300">
+              {/* Header del ticket con perforaciones */}
+              <div className="relative bg-gradient-to-r from-paydece-cyan to-paydece-lightblue p-4 rounded-t-3xl">
+                {/* Perforaciones superiores */}
+                <div className="absolute -top-3 left-0 right-0 flex justify-center space-x-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="w-5 h-5 bg-white rounded-full border-2 border-gray-300"></div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between items-start mt-4">
+                  <div>
+                    <h2 className="text-base font-bold text-white">TICKET</h2>
+                    <p className="text-xs text-white opacity-90">{selectedTransaction.id}</p>
+                  </div>
+                  <button
+                    onClick={closeModal}
+                    className="text-white hover:text-gray-200 text-xl font-bold bg-white bg-opacity-20 rounded-full w-7 h-7 flex items-center justify-center"
+                  >
                     ×
                   </button>
                 </div>
 
                 {/* Badges de operación y estado */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mt-2">
                   {getOperationBadge(selectedTransaction.operation)}
                   {getStatusBadge(selectedTransaction.status)}
                 </div>
+              </div>
 
-                {/* Información general */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Fecha y hora</h3>
-                      <p className="text-base font-medium">
-                        {formatLocalDateTime(selectedTransaction.timestamp).fullDateTime}
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Referencia</h3>
-                      <p className="text-base font-medium">{selectedTransaction.reference}</p>
-                    </div>
+              {/* Línea de corte con perforaciones laterales */}
+              <div className="relative bg-white">
+                <div className="absolute -left-3 top-0 w-6 h-6 bg-gray-100 rounded-full border-3 border-dashed border-gray-300"></div>
+                <div className="absolute -right-3 top-0 w-6 h-6 bg-gray-100 rounded-full border-3 border-dashed border-gray-300"></div>
+                <div className="border-t-2 border-dashed border-gray-300 mx-3"></div>
+              </div>
+
+              {/* Contenido del ticket */}
+              <div className="p-4 space-y-2 bg-white">
+                {/* Fecha y hora */}
+                <div className="text-center border-b border-dotted border-gray-300 pb-2">
+                  <p className="text-xs text-gray-400 uppercase tracking-wider font-mono">FECHA Y HORA</p>
+                  <p className="text-xs font-mono font-medium text-gray-800">
+                    {formatLocalDateTime(selectedTransaction.timestamp).fullDateTime}
+                  </p>
+                </div>
+
+                {/* Información principal en formato ticket */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center py-0.5 border-b border-dotted border-gray-200">
+                    <span className="text-xs text-gray-400 uppercase tracking-wide font-mono">REF:</span>
+                    <span className="text-xs font-mono text-gray-800">{selectedTransaction.reference}</span>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Monto Cripto</h3>
-                      <p className="text-base font-medium">
-                        {formatCrypto(selectedTransaction.cryptoAmount)} {selectedTransaction.cryptoCurrency}
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Monto FIAT</h3>
-                      <p className="text-base font-medium">
-                        {new Intl.NumberFormat("es-ES", {
-                          style: "decimal",
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }).format(selectedTransaction.fiatAmount)}{" "}
-                        {selectedTransaction.fiatCurrency}
-                      </p>
-                    </div>
+
+                  <div className="flex justify-between items-center py-1 bg-gray-50 px-2 rounded border-l-2 border-gray-300">
+                    <span className="text-xs text-gray-400 uppercase tracking-wide font-mono">CRIPTO:</span>
+                    <span className="text-xs font-mono font-bold text-gray-900">
+                      {formatCrypto(selectedTransaction.cryptoAmount)} {selectedTransaction.cryptoCurrency}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center py-0.5 border-b border-dotted border-gray-200">
+                    <span className="text-xs text-gray-400 uppercase tracking-wide font-mono">FIAT:</span>
+                    <span className="text-xs font-mono font-bold text-gray-900">
+                      {new Intl.NumberFormat("es-ES", {
+                        style: "decimal",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }).format(selectedTransaction.fiatAmount)}{" "}
+                      {selectedTransaction.fiatCurrency}
+                    </span>
                   </div>
                 </div>
 
-                {/* Separador */}
-                <hr className="border-gray-200" />
+                {/* Separador con línea punteada */}
+                <div className="border-t border-dashed border-gray-400 my-3"></div>
 
                 {/* Información de contraparte */}
-                <div>
-                  <h3 className="text-base font-medium mb-3">Información de contraparte</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Wallet</p>
-                        <p className="text-sm font-medium">{selectedTransaction.counterparty.wallet}</p>
+                <div className="space-y-2">
+                  <h3 className="text-xs text-gray-400 uppercase tracking-wider text-center font-mono">CONTRAPARTE</h3>
+
+                  <div className="bg-gray-50 p-2 rounded border border-gray-200 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400 font-mono">WALLET:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-mono text-gray-800">
+                          {truncateWallet(selectedTransaction.counterparty.wallet)}
+                        </span>
+                        <button
+                          onClick={() => handleCopy(selectedTransaction.counterparty.wallet)}
+                          className="text-gray-400 hover:text-gray-600 text-xs"
+                        >
+                          📋
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleCopy(selectedTransaction.counterparty.wallet)}
-                        className="text-gray-500 hover:text-gray-700 p-1"
-                      >
-                        📋
-                      </button>
                     </div>
-                    <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Telegram</p>
-                        <p className="text-sm font-medium">{selectedTransaction.counterparty.telegram}</p>
-                      </div>
-                      <div className="flex gap-2">
+
+                    <div className="flex items-center justify-between border-t border-dotted border-gray-300 pt-1">
+                      <span className="text-xs text-gray-400 font-mono">TG:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-mono text-gray-800">
+                          {selectedTransaction.counterparty.telegram}
+                        </span>
                         <button
                           onClick={() => handleCopy(selectedTransaction.counterparty.telegram)}
-                          className="text-gray-500 hover:text-gray-700 p-1"
+                          className="text-gray-400 hover:text-gray-600 text-xs"
                         >
                           📋
                         </button>
@@ -1031,7 +1164,7 @@ const TransactionsTab = () => {
                               "_blank",
                             )
                           }
-                          className="text-gray-500 hover:text-gray-700 p-1"
+                          className="text-gray-400 hover:text-gray-600 text-xs"
                         >
                           🔗
                         </button>
@@ -1040,40 +1173,65 @@ const TransactionsTab = () => {
                   </div>
                 </div>
 
-                {/* Separador */}
-                <hr className="border-gray-200" />
+                {/* Separador con línea punteada */}
+                <div className="border-t border-dashed border-gray-400 my-3"></div>
 
                 {/* Detalles financieros */}
-                <div>
-                  <h3 className="text-base font-medium mb-3">Detalles financieros</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Monto bruto</p>
-                      <p className="text-sm font-medium">
+                <div className="space-y-1">
+                  <h3 className="text-xs text-gray-400 uppercase tracking-wider text-center font-mono">DETALLES</h3>
+
+                  <div className="space-y-0.5 text-xs font-mono">
+                    <div className="flex justify-between border-b border-dotted border-gray-200 py-0.5">
+                      <span className="text-gray-400">BRUTO:</span>
+                      <span className="text-gray-800">
                         {formatCrypto(selectedTransaction.cryptoAmount)} {selectedTransaction.cryptoCurrency}
-                      </p>
+                      </span>
                     </div>
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Comisión</p>
-                      <p className="text-sm font-medium">
-                        {formatCrypto(selectedTransaction.fee)} {selectedTransaction.cryptoCurrency}
-                      </p>
+                    <div className="flex justify-between border-b border-dotted border-gray-200 py-0.5">
+                      <span className="text-gray-400">COMISIÓN:</span>
+                      <span className="text-gray-800">
+                        -{formatCrypto(selectedTransaction.fee)} {selectedTransaction.cryptoCurrency}
+                      </span>
                     </div>
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Monto neto</p>
-                      <p className="text-sm font-medium">
-                        {formatCrypto(selectedTransaction.net)} {selectedTransaction.cryptoCurrency}
-                      </p>
+                    <div className="border-t-2 border-gray-400 pt-1 mt-1">
+                      <div className="flex justify-between font-bold bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-gray-600">NETO:</span>
+                        <span className="text-gray-900">
+                          {formatCrypto(selectedTransaction.net)} {selectedTransaction.cryptoCurrency}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
+                {/* Separador con línea punteada */}
+                <div className="border-t border-dashed border-gray-400 my-3"></div>
+
                 {/* Acciones */}
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button variant="outline">Descargar comprobante</Button>
+                <div className="space-y-1">
+                  <Button variant="outline" className="w-full text-xs py-1.5 rounded-full border-gray-300">
+                    📄 Descargar comprobante
+                  </Button>
                   {selectedTransaction.status === "iniciada" && (
-                    <Button className="paydece-button-secondary">Cancelar transacción</Button>
+                    <Button className="w-full text-xs py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white">
+                      ❌ Cancelar transacción
+                    </Button>
                   )}
+                </div>
+              </div>
+
+              {/* Footer del ticket con perforaciones */}
+              <div className="relative bg-gray-50 p-3 rounded-b-3xl border-t border-dashed border-gray-300">
+                {/* Perforaciones inferiores */}
+                <div className="absolute -bottom-3 left-0 right-0 flex justify-center space-x-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="w-5 h-5 bg-white rounded-full border-2 border-gray-300"></div>
+                  ))}
+                </div>
+
+                <div className="text-center">
+                  <p className="text-xs text-gray-500 font-mono tracking-wider">PAYDECE</p>
+                  <p className="text-xs text-gray-400 font-mono">Gracias por usar nuestros servicios</p>
                 </div>
               </div>
             </div>
