@@ -465,7 +465,18 @@ export default function TransactionsTab() {
       setLoading(false)
       setInitialLoad(false)
     }, delay)
-  }, [currentPage, loading, hasMore, searchTerm, statusFilter, operationFilter, dateRange, sortConfig, initialLoad])
+  }, [
+    currentPage,
+    loading,
+    hasMore,
+    searchTerm,
+    statusFilter,
+    operationFilter,
+    dateRange,
+    sortConfig,
+    initialLoad,
+    getFilteredTransactions,
+  ])
 
   // Efecto para cargar transacciones iniciales y cuando cambien los filtros
   useEffect(() => {
@@ -675,7 +686,7 @@ export default function TransactionsTab() {
                       defaultMonth={dateRange.from}
                       selected={dateRange}
                       onSelect={setDateRange}
-                      numberOfMonths={window.innerWidth < 768 ? 1 : 2}
+                      numberOfMonths={typeof window !== "undefined" && window.innerWidth < 768 ? 1 : 2}
                       locale={es}
                     />
                   </PopoverContent>
