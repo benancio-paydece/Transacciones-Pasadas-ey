@@ -125,6 +125,18 @@ const formatStatus = (status: string): string => {
   }
 }
 
+// Función para formatear operaciones correctamente
+const formatOperation = (operation: string): string => {
+  switch (operation) {
+    case "compra":
+      return "Compra"
+    case "venta":
+      return "Venta"
+    default:
+      return operation.charAt(0).toUpperCase() + operation.slice(1)
+  }
+}
+
 // Función para descargar CSV que coincida exactamente con las columnas de la tabla
 const downloadCSV = (data: Transaction[], filename: string): void => {
   // Preparar los datos para CSV con las mismas columnas que se muestran en la tabla
@@ -270,26 +282,25 @@ export default function TransactionsTab() {
     },
   ]
 
-  // Calcular volumen mensual de USDC en los últimos 30 días
-  // TODO: Conectar API para obtener volumen mensual
-  // const monthlyVolume = useMemo(() => {
-  //   // Lógica eliminada - reemplazar con llamada a API
-  // }, [])
-
-  // Placeholder temporal - reemplazar con datos de API
-  const monthlyVolume = "1,250"
-
-  // NUEVA LÓGICA: Transacciones completadas (últimos 30 días)
-  // TODO: Conectar API para obtener estadísticas de transacciones
-  // const completedTransactionsCount = useMemo(() => {
-  //   // Lógica eliminada - reemplazar con llamada a API
-  // }, [])
-
-  // const ordersInProcessCount = useMemo(() => {
-  //   // Lógica eliminada - reemplazar con llamada a API
-  // }, [])
+  // TODO: Implementar llamada a API para obtener estadísticas
+  // Ejemplo:
+  // useEffect(() => {
+  //   async function fetchStats() {
+  //     try {
+  //       const response = await fetch('/api/stats');
+  //       const data = await response.json();
+  //       setMonthlyVolume(data.monthlyVolume);
+  //       setCompletedTransactionsCount(data.completedTransactionsCount);
+  //       setOrdersInProcessCount(data.ordersInProcessCount);
+  //     } catch (error) {
+  //       console.error('Error fetching stats:', error);
+  //     }
+  //   }
+  //   fetchStats();
+  // }, []);
 
   // Placeholders temporales - reemplazar con datos de API
+  const monthlyVolume = "1,250"
   const completedTransactionsCount = 1
   const ordersInProcessCount = 0
 
@@ -806,7 +817,7 @@ export default function TransactionsTab() {
                 </Table>
               </div>
 
-              {/* Mobile Card Layout */}
+              {/* Mobile Card Layout - Rediseñado según especificaciones */}
               <div className="md:hidden space-y-3 p-3">
                 {displayedTransactions.map((transaction) => {
                   const localDateTime = formatLocalDateTime(transaction.timestamp)
@@ -816,22 +827,25 @@ export default function TransactionsTab() {
                       className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
                       onClick={() => handleRowClick(transaction)}
                     >
-                      {/* Header con ID y badges */}
+                      {/* Header con estado y operación */}
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-gray-900">{transaction.id}</span>
-                          <span className="text-xs text-gray-500">
-                            {localDateTime.date} {localDateTime.time}
+                          <span className="text-sm font-semibold text-gray-900">
+                            {formatStatus(transaction.status)}
                           </span>
+                          <span className="text-xs text-gray-500">{formatOperation(transaction.operation)}</span>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                          {getOperationBadge(transaction.operation)}
-                          {getStatusBadge(transaction.status)}
-                        </div>
+                        <div>{getStatusBadge(transaction.status)}</div>
                       </div>
 
                       {/* Información principal */}
                       <div className="space-y-3">
+                        {/* # Transacción */}
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-medium text-gray-600"># Transacción:</span>
+                          <span className="text-xs text-gray-900">{transaction.id}</span>
+                        </div>
+
                         {/* Fecha */}
                         <div className="flex justify-between items-center">
                           <span className="text-xs font-medium text-gray-600">Fecha:</span>
