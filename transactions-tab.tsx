@@ -532,77 +532,83 @@ export default function TransactionsTab() {
   return (
     <div className="h-full bg-paydece-gradient overflow-hidden">
       <div ref={scrollContainerRef} className="h-full overflow-y-auto">
-        {/* Stats Cards - Con redondeo correcto en la intersección */}
-        <div className="grid md:grid-cols-2 border border-gray-200 overflow-hidden">
-          <Card className="bg-white border-0 rounded-none border-r border-gray-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-3">
-              <CardTitle className="text-base font-semibold">Volumen Mensual (últimos 30 días)</CardTitle>
+        {/* Stats Cards - Responsive grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 border border-gray-200 overflow-hidden">
+          <Card className="bg-white border-0 rounded-none border-b md:border-b-0 md:border-r border-gray-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 md:px-5 pt-3">
+              <CardTitle className="text-sm md:text-base font-semibold">Volumen Mensual (últimos 30 días)</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 pb-3 px-5">
-              <div className="text-2xl font-bold text-paydece-blue">{monthlyVolume} USDC</div>
+            <CardContent className="pt-0 pb-3 px-3 md:px-5">
+              <div className="text-xl md:text-2xl font-bold text-paydece-blue">{monthlyVolume} USDC</div>
             </CardContent>
           </Card>
           <Card className="bg-white border-0 rounded-none">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-3">
-              <CardTitle className="text-base font-semibold">Transacciones completadas (últimos 30 días)</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 md:px-5 pt-3">
+              <CardTitle className="text-sm md:text-base font-semibold">
+                Transacciones completadas (últimos 30 días)
+              </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 pb-3 px-5">
-              <div className="text-2xl font-bold text-paydece-blue">{completedTransactionsCount}</div>
-              <p className="text-base text-muted-foreground">{ordersInProcessCount} órdenes en proceso</p>
+            <CardContent className="pt-0 pb-3 px-3 md:px-5">
+              <div className="text-xl md:text-2xl font-bold text-paydece-blue">{completedTransactionsCount}</div>
+              <p className="text-sm md:text-base text-muted-foreground">{ordersInProcessCount} órdenes en proceso</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters - Sin espaciado superior */}
+        {/* Filters - Responsive layout */}
         <Card className="paydece-card rounded-none border-l border-r border-gray-200">
-          <CardHeader className="pb-2 px-5 pt-1">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Filter className="h-4 w-4" />
-                Filtros
-              </CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  onClick={clearFilters}
-                  variant="outline"
-                  className="flex items-center gap-2 rounded-full text-sm px-3 py-1.5 h-8"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  Limpiar filtros
-                </Button>
-                <Button
-                  onClick={downloadSummary}
-                  className="bg-black text-white font-medium rounded-full transition-all hover:opacity-90 flex items-center gap-2 text-sm px-3 py-1.5 h-8"
-                >
-                  <Download className="h-3 w-3" />
-                  Descargar resumen
-                </Button>
+          <CardHeader className="pb-2 px-3 md:px-5 pt-1">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <CardTitle className="flex items-center gap-2 text-sm md:text-base font-semibold">
+                  <Filter className="h-4 w-4" />
+                  Filtros
+                </CardTitle>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    onClick={clearFilters}
+                    variant="outline"
+                    className="flex items-center gap-2 rounded-full text-xs md:text-sm px-2 md:px-3 py-1.5 h-7 md:h-8 flex-1 sm:flex-none"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    <span className="hidden sm:inline">Limpiar filtros</span>
+                    <span className="sm:hidden">Limpiar</span>
+                  </Button>
+                  <Button
+                    onClick={downloadSummary}
+                    className="bg-black text-white font-medium rounded-full transition-all hover:opacity-90 flex items-center gap-2 text-xs md:text-sm px-2 md:px-3 py-1.5 h-7 md:h-8 flex-1 sm:flex-none"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span className="hidden sm:inline">Descargar resumen</span>
+                    <span className="sm:hidden">Descargar</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-0 pb-3 px-5">
-            <div className="grid gap-3 md:grid-cols-4">
-              <div className="space-y-2">
-                <Label htmlFor="search" className="text-sm font-medium">
+          <CardContent className="pt-0 pb-3 px-3 md:px-5">
+            <div className="grid gap-2 md:gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+              <div className="space-y-1 md:space-y-2">
+                <Label htmlFor="search" className="text-xs md:text-sm font-medium">
                   Buscar
                 </Label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-2 h-3 w-3 text-muted-foreground" />
+                  <Search className="absolute left-2 md:left-3 top-1.5 md:top-2 h-3 w-3 text-muted-foreground" />
                   <Input
                     id="search"
                     placeholder="Escribe 3 letras"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 rounded-full text-sm h-8 focus:ring-gray-500 focus:border-gray-500"
+                    className="pl-6 md:pl-8 rounded-full text-xs md:text-sm h-7 md:h-8 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="status" className="text-sm font-medium">
+              <div className="space-y-1 md:space-y-2">
+                <Label htmlFor="status" className="text-xs md:text-sm font-medium">
                   Estado
                 </Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="rounded-full text-sm h-8 focus:ring-gray-500 focus:border-gray-500">
+                  <SelectTrigger className="rounded-full text-xs md:text-sm h-7 md:h-8 focus:ring-gray-500 focus:border-gray-500">
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -618,12 +624,12 @@ export default function TransactionsTab() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="operation" className="text-sm font-medium">
+              <div className="space-y-1 md:space-y-2">
+                <Label htmlFor="operation" className="text-xs md:text-sm font-medium">
                   Operación
                 </Label>
                 <Select value={operationFilter} onValueChange={handleOperationFilterChange}>
-                  <SelectTrigger className="rounded-full text-sm h-8 focus:ring-gray-500 focus:border-gray-500">
+                  <SelectTrigger className="rounded-full text-xs md:text-sm h-7 md:h-8 focus:ring-gray-500 focus:border-gray-500">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
@@ -633,8 +639,8 @@ export default function TransactionsTab() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="date" className="text-sm font-medium">
+              <div className="space-y-1 md:space-y-2">
+                <Label htmlFor="date" className="text-xs md:text-sm font-medium">
                   Fecha
                 </Label>
                 <Popover>
@@ -643,11 +649,11 @@ export default function TransactionsTab() {
                       id="date"
                       variant={"outline"}
                       className={cn(
-                        "w-full justify-start text-left font-normal rounded-full text-sm h-8 focus:ring-gray-500 focus:border-gray-500",
+                        "w-full justify-start text-left font-normal rounded-full text-xs md:text-sm h-7 md:h-8 focus:ring-gray-500 focus:border-gray-500",
                         !dateRange.from && !dateRange.to && "text-muted-foreground",
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-3 w-3" />
+                      <CalendarIcon className="mr-1 md:mr-2 h-3 w-3" />
                       {dateRange.from ? (
                         dateRange.to ? (
                           <>
@@ -669,7 +675,7 @@ export default function TransactionsTab() {
                       defaultMonth={dateRange.from}
                       selected={dateRange}
                       onSelect={setDateRange}
-                      numberOfMonths={2}
+                      numberOfMonths={window.innerWidth < 768 ? 1 : 2}
                       locale={es}
                     />
                   </PopoverContent>
@@ -679,110 +685,163 @@ export default function TransactionsTab() {
           </CardContent>
         </Card>
 
-        {/* Transactions Table - Sin espaciado superior */}
+        {/* Transactions Table - Mobile responsive */}
         <Card className="paydece-card rounded-bl-xl rounded-br-xl rounded-tl-none rounded-tr-none border-t-0 border-gray-200 flex-1">
           <CardContent className="p-0 h-full">
             <div className="overflow-hidden h-full">
-              <Table>
-                <TableHeader className="bg-gray-50">
-                  <TableRow>
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
-                      onClick={() => requestSort("timestamp")}
-                    >
-                      Fecha{getSortDirection("timestamp")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[18%] text-center font-semibold"
-                      onClick={() => requestSort("counterparty")}
-                    >
-                      Contraparte{getSortDirection("counterparty")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
-                      onClick={() => requestSort("crypto")}
-                    >
-                      Cripto{getSortDirection("crypto")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
-                      onClick={() => requestSort("fiat")}
-                    >
-                      FIAT{getSortDirection("fiat")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[10%] text-center font-semibold"
-                      onClick={() => requestSort("operation")}
-                    >
-                      Operación{getSortDirection("operation")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[14%] text-center font-semibold"
-                      onClick={() => requestSort("id")}
-                    >
-                      # Transacción{getSortDirection("id")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
-                      onClick={() => requestSort("status")}
-                    >
-                      Estado{getSortDirection("status")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayedTransactions.map((transaction) => {
-                    const localDateTime = formatLocalDateTime(transaction.timestamp)
-                    return (
-                      <TableRow
-                        key={transaction.id}
-                        className="cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => handleRowClick(transaction)}
+              {/* Desktop Table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow>
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
+                        onClick={() => requestSort("timestamp")}
                       >
-                        <TableCell className="py-2 px-3 w-[12%]">
-                          <div className="flex flex-col text-center">
-                            <span className="text-sm font-medium">{localDateTime.date}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {localDateTime.time} {localDateTime.utc}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2 px-3 w-[18%]">
-                          <div className="flex flex-col text-center">
-                            <span className="font-medium text-sm">
-                              {truncateWallet(transaction.counterparty.wallet)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">{transaction.counterparty.telegram}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium text-sm py-2 px-3 w-[12%] text-center">
-                          <div className="flex flex-col">
-                            <span className="text-sm">{formatCrypto(transaction.cryptoAmount)}</span>
-                            <span className="text-xs text-muted-foreground">{transaction.cryptoCurrency}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium text-sm py-2 px-3 w-[12%] text-center">
-                          <div className="flex flex-col">
-                            <span className="text-sm">{formatFiat(transaction.fiatAmount)}</span>
-                            <span className="text-xs text-muted-foreground">{transaction.fiatCurrency}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2 px-3 w-[10%] text-center">
-                          {getOperationBadge(transaction.operation)}
-                        </TableCell>
-                        <TableCell className="font-medium text-sm py-2 px-3 w-[14%] text-center">
-                          {transaction.id}
-                        </TableCell>
-                        <TableCell className="py-2 px-3 w-[12%] text-center">
-                          {getStatusBadge(transaction.status)}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
+                        Fecha{getSortDirection("timestamp")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[18%] text-center font-semibold"
+                        onClick={() => requestSort("counterparty")}
+                      >
+                        Contraparte{getSortDirection("counterparty")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
+                        onClick={() => requestSort("crypto")}
+                      >
+                        Cripto{getSortDirection("crypto")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
+                        onClick={() => requestSort("fiat")}
+                      >
+                        FIAT{getSortDirection("fiat")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[10%] text-center font-semibold"
+                        onClick={() => requestSort("operation")}
+                      >
+                        Operación{getSortDirection("operation")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[14%] text-center font-semibold"
+                        onClick={() => requestSort("id")}
+                      >
+                        # Transacción{getSortDirection("id")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-100 text-sm py-2 px-3 w-[12%] text-center font-semibold"
+                        onClick={() => requestSort("status")}
+                      >
+                        Estado{getSortDirection("status")}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {displayedTransactions.map((transaction) => {
+                      const localDateTime = formatLocalDateTime(transaction.timestamp)
+                      return (
+                        <TableRow
+                          key={transaction.id}
+                          className="cursor-pointer hover:bg-gray-50 transition-colors"
+                          onClick={() => handleRowClick(transaction)}
+                        >
+                          <TableCell className="py-2 px-3 w-[12%]">
+                            <div className="flex flex-col text-center">
+                              <span className="text-sm font-medium">{localDateTime.date}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {localDateTime.time} {localDateTime.utc}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2 px-3 w-[18%]">
+                            <div className="flex flex-col text-center">
+                              <span className="font-medium text-sm">
+                                {truncateWallet(transaction.counterparty.wallet)}
+                              </span>
+                              <span className="text-xs text-muted-foreground">{transaction.counterparty.telegram}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium text-sm py-2 px-3 w-[12%] text-center">
+                            <div className="flex flex-col">
+                              <span className="text-sm">{formatCrypto(transaction.cryptoAmount)}</span>
+                              <span className="text-xs text-muted-foreground">{transaction.cryptoCurrency}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium text-sm py-2 px-3 w-[12%] text-center">
+                            <div className="flex flex-col">
+                              <span className="text-sm">{formatFiat(transaction.fiatAmount)}</span>
+                              <span className="text-xs text-muted-foreground">{transaction.fiatCurrency}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2 px-3 w-[10%] text-center">
+                            {getOperationBadge(transaction.operation)}
+                          </TableCell>
+                          <TableCell className="font-medium text-sm py-2 px-3 w-[14%] text-center">
+                            {transaction.id}
+                          </TableCell>
+                          <TableCell className="py-2 px-3 w-[12%] text-center">
+                            {getStatusBadge(transaction.status)}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
 
-              {/* Indicadores de carga y estado MEJORADOS */}
+              {/* Mobile Card Layout */}
+              <div className="md:hidden space-y-2 p-3">
+                {displayedTransactions.map((transaction) => {
+                  const localDateTime = formatLocalDateTime(transaction.timestamp)
+                  return (
+                    <div
+                      key={transaction.id}
+                      className="bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => handleRowClick(transaction)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">{transaction.id}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {localDateTime.date} {localDateTime.time}
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          {getOperationBadge(transaction.operation)}
+                          {getStatusBadge(transaction.status)}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-muted-foreground">Cripto:</span>
+                          <div className="font-medium">
+                            {formatCrypto(transaction.cryptoAmount)} {transaction.cryptoCurrency}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">FIAT:</span>
+                          <div className="font-medium">
+                            {formatFiat(transaction.fiatAmount)} {transaction.fiatCurrency}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <div className="text-xs text-muted-foreground">Contraparte:</div>
+                        <div className="text-xs">
+                          <div className="font-medium">{truncateWallet(transaction.counterparty.wallet)}</div>
+                          <div className="text-muted-foreground">{transaction.counterparty.telegram}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Loading and status indicators remain the same */}
               {initialLoad && loading && (
                 <div className="flex justify-center py-8 border-t border-gray-200">
                   <div className="flex items-center gap-3">
