@@ -430,15 +430,14 @@ export default function TransactionsTab() {
   // NUEVA LÓGICA: Órdenes en proceso
   const ordersInProcessCount = useMemo(() => {
     const processStatuses = ["iniciada", "en custodia", "pagado", "apelado"]
-    const allTransactionsValue = allTransactions
 
-    return allTransactionsValue.reduce((count, transaction) => {
+    return allTransactions.reduce((count, transaction) => {
       if (processStatuses.includes(transaction.status)) {
         return count + 1
       }
       return count
     }, 0)
-  }, [allTransactions])
+  }, [allTransactions.length])
 
   // Función para limpiar filtros
   const clearFilters = (): void => {
@@ -693,8 +692,8 @@ export default function TransactionsTab() {
     <div className="h-full bg-paydece-gradient overflow-hidden">
       <div ref={scrollContainerRef} className="h-full overflow-y-auto">
         {/* Stats Cards - Con redondeo correcto en la intersección */}
-        <div className="grid md:grid-cols-2">
-          <Card className="paydece-card rounded-tl-xl rounded-tr-none rounded-bl-none rounded-br-lg border-r border-gray-400">
+        <div className="grid md:grid-cols-2 border border-gray-300 overflow-hidden">
+          <Card className="bg-white border-0 rounded-none border-r border-gray-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-3">
               <CardTitle className="text-base font-semibold">Volumen Mensual (últimos 30 días)</CardTitle>
             </CardHeader>
@@ -702,7 +701,7 @@ export default function TransactionsTab() {
               <div className="text-2xl font-bold text-paydece-blue">{monthlyVolume} USDC</div>
             </CardContent>
           </Card>
-          <Card className="paydece-card rounded-tl-none rounded-tr-xl rounded-bl-lg rounded-br-none">
+          <Card className="bg-white border-0 rounded-none">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-3">
               <CardTitle className="text-base font-semibold">Transacciones completadas (últimos 30 días)</CardTitle>
             </CardHeader>
@@ -714,7 +713,7 @@ export default function TransactionsTab() {
         </div>
 
         {/* Filters - Sin espaciado superior */}
-        <Card className="paydece-card rounded-none border-t-0 border-gray-400">
+        <Card className="paydece-card rounded-none border border-gray-300 border-b-0">
           <CardHeader className="pb-2 px-5 pt-3">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
