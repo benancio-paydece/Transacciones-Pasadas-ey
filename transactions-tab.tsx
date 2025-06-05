@@ -182,59 +182,71 @@ const downloadCSV = (data: Transaction[], filename: string): void => {
   document.body.removeChild(link)
 }
 
-// Restaurar la función handleRowClick para abrir en nueva pestaña como funcionaba antes
-const handleRowClick = (transaction: Transaction): void => {
-  // Abrir detalles en nueva pestaña
-  const detailsUrl = `/transaction/${transaction.id}`
-  window.open(detailsUrl, "_blank")
-}
+// Estado para el modal de detalles
+const TransactionsTab = () => {
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "iniciada":
-      return <Badge className="paydece-badge-blue text-xs">Iniciada</Badge>
-    case "en-custodia":
-    case "en custodia":
-      return <Badge className="paydece-badge-orange text-xs">En Custodia</Badge>
-    case "pagado":
-      return <Badge className="paydece-badge-green text-xs">Pagado</Badge>
-    case "finalizado":
-      return <Badge className="paydece-badge-green text-xs">Finalizado</Badge>
-    case "cancelado":
-      return <Badge className="paydece-badge-red text-xs">Cancelado</Badge>
-    case "reembolsado":
-      return <Badge className="paydece-badge-purple text-xs">Reembolsado</Badge>
-    case "apelado":
-      return <Badge className="paydece-badge-yellow text-xs">Apelado</Badge>
-    case "liberado":
-      return <Badge className="paydece-badge-gray text-xs">Liberado</Badge>
-    case "transferido":
-      return <Badge className="paydece-badge-blue text-xs">Transferido</Badge>
-    default:
-      return (
-        <Badge variant="secondary" className="text-xs">
-          {status}
-        </Badge>
-      )
+  const handleRowClick = (transaction: Transaction): void => {
+    setSelectedTransaction(transaction)
+    setIsModalOpen(true)
   }
-}
 
-const getOperationBadge = (operation: string) => {
-  switch (operation) {
-    case "compra":
-      return <Badge className="paydece-badge-green text-xs">Compra</Badge>
-    case "venta":
-      return <Badge className="paydece-badge-blue text-xs">Venta</Badge>
-    default:
-      return (
-        <Badge variant="secondary" className="text-xs">
-          {operation}
-        </Badge>
-      )
+  const closeModal = (): void => {
+    setIsModalOpen(false)
+    setSelectedTransaction(null)
   }
-}
 
-export default function TransactionsTab() {
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    // Opcional: agregar feedback visual
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "iniciada":
+        return <Badge className="paydece-badge-blue text-xs">Iniciada</Badge>
+      case "en-custodia":
+      case "en custodia":
+        return <Badge className="paydece-badge-orange text-xs">En Custodia</Badge>
+      case "pagado":
+        return <Badge className="paydece-badge-green text-xs">Pagado</Badge>
+      case "finalizado":
+        return <Badge className="paydece-badge-green text-xs">Finalizado</Badge>
+      case "cancelado":
+        return <Badge className="paydece-badge-red text-xs">Cancelado</Badge>
+      case "reembolsado":
+        return <Badge className="paydece-badge-purple text-xs">Reembolsado</Badge>
+      case "apelado":
+        return <Badge className="paydece-badge-yellow text-xs">Apelado</Badge>
+      case "liberado":
+        return <Badge className="paydece-badge-gray text-xs">Liberado</Badge>
+      case "transferido":
+        return <Badge className="paydece-badge-blue text-xs">Transferido</Badge>
+      default:
+        return (
+          <Badge variant="secondary" className="text-xs">
+            {status}
+          </Badge>
+        )
+    }
+  }
+
+  const getOperationBadge = (operation: string) => {
+    switch (operation) {
+      case "compra":
+        return <Badge className="paydece-badge-green text-xs">Compra</Badge>
+      case "venta":
+        return <Badge className="paydece-badge-blue text-xs">Venta</Badge>
+      default:
+        return (
+          <Badge variant="secondary" className="text-xs">
+            {operation}
+          </Badge>
+        )
+    }
+  }
+
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -491,7 +503,18 @@ export default function TransactionsTab() {
       setLoading(false)
       setInitialLoad(false)
     }, delay)
-  }, [currentPage, loading, hasMore, searchTerm, statusFilter, operationFilter, dateRange, sortConfig, initialLoad])
+  }, [
+    currentPage,
+    loading,
+    hasMore,
+    searchTerm,
+    statusFilter,
+    operationFilter,
+    dateRange,
+    sortConfig,
+    initialLoad,
+    getFilteredTransactions,
+  ])
 
   // Efecto para cargar transacciones iniciales y cuando cambien los filtros
   useEffect(() => {
@@ -916,7 +939,149 @@ export default function TransactionsTab() {
             </div>
           </CardContent>
         </Card>
+        {/* Modal de detalles de transacción */}
+        {isModalOpen && selectedTransaction && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 space-y-4">
+                {/* Header del modal */}
+                <div className="flex justify-between items-start">
+                  <h2 className="text-xl font-bold text-paydece-blue">Transacción {selectedTransaction.id}</h2>
+                  <button onClick={closeModal} className="text-gray-500 hover:text-gray-700 text-2xl font-bold">
+                    ×
+                  </button>
+                </div>
+
+                {/* Badges de operación y estado */}
+                <div className="flex items-center gap-2">
+                  {getOperationBadge(selectedTransaction.operation)}
+                  {getStatusBadge(selectedTransaction.status)}
+                </div>
+
+                {/* Información general */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Fecha y hora</h3>
+                      <p className="text-base font-medium">
+                        {formatLocalDateTime(selectedTransaction.timestamp).fullDateTime}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Referencia</h3>
+                      <p className="text-base font-medium">{selectedTransaction.reference}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Monto Cripto</h3>
+                      <p className="text-base font-medium">
+                        {formatCrypto(selectedTransaction.cryptoAmount)} {selectedTransaction.cryptoCurrency}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Monto FIAT</h3>
+                      <p className="text-base font-medium">
+                        {new Intl.NumberFormat("es-ES", {
+                          style: "decimal",
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(selectedTransaction.fiatAmount)}{" "}
+                        {selectedTransaction.fiatCurrency}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Separador */}
+                <hr className="border-gray-200" />
+
+                {/* Información de contraparte */}
+                <div>
+                  <h3 className="text-base font-medium mb-3">Información de contraparte</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Wallet</p>
+                        <p className="text-sm font-medium">{selectedTransaction.counterparty.wallet}</p>
+                      </div>
+                      <button
+                        onClick={() => handleCopy(selectedTransaction.counterparty.wallet)}
+                        className="text-gray-500 hover:text-gray-700 p-1"
+                      >
+                        📋
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Telegram</p>
+                        <p className="text-sm font-medium">{selectedTransaction.counterparty.telegram}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleCopy(selectedTransaction.counterparty.telegram)}
+                          className="text-gray-500 hover:text-gray-700 p-1"
+                        >
+                          📋
+                        </button>
+                        <button
+                          onClick={() =>
+                            window.open(
+                              `https://t.me/${selectedTransaction.counterparty.telegram.substring(1)}`,
+                              "_blank",
+                            )
+                          }
+                          className="text-gray-500 hover:text-gray-700 p-1"
+                        >
+                          🔗
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Separador */}
+                <hr className="border-gray-200" />
+
+                {/* Detalles financieros */}
+                <div>
+                  <h3 className="text-base font-medium mb-3">Detalles financieros</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Monto bruto</p>
+                      <p className="text-sm font-medium">
+                        {formatCrypto(selectedTransaction.cryptoAmount)} {selectedTransaction.cryptoCurrency}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Comisión</p>
+                      <p className="text-sm font-medium">
+                        {formatCrypto(selectedTransaction.fee)} {selectedTransaction.cryptoCurrency}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Monto neto</p>
+                      <p className="text-sm font-medium">
+                        {formatCrypto(selectedTransaction.net)} {selectedTransaction.cryptoCurrency}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Acciones */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button variant="outline">Descargar comprobante</Button>
+                  {selectedTransaction.status === "iniciada" && (
+                    <Button className="paydece-button-secondary">Cancelar transacción</Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
+
+export default TransactionsTab
